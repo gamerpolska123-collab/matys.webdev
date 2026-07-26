@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: construction-cms-app
+    restart: unless-stopped
+    expose:
+      - "8000"
+    volumes:
+      - ../data:/app/data
+      - ../modules:/app/modules
+      - ../app/static/uploads:/app/app/static/uploads
+    environment:
+      - DATABASE_URL=sqlite:///data/cms.db
+      - SECRET_KEY=change-me-in-production-very-strong-key-2026
+      - ADMIN_EMAIL=admin@firma.pl
+      - ADMIN_PASSWORD=admin123
+      - MODULES_ENABLED=onepage,blog,shop
+    networks:
+      - cms-network
+    # Na RPi start może trwać dłużej - dajemy czas
+    stop_grace_period: 30s
+
+  nginx:
+    image: nginx:alpine
+    container_name: construction-cms-nginx
+    restart: unless-stopped
+    ports:
+      - "85:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ../app/static:/usr/share/nginx/html/static:ro
+    depends_on:
+      - app
+    networks:
+      - cms-network
+
+networks:
+  cms-network:
+    driver: bridge

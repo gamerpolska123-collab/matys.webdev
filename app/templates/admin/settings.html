@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block title %}Ustawienia{% endblock %}
+{% block header %}Ustawienia strony{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl">
+    <form id="settingsForm" class="bg-white rounded-xl shadow-sm border p-6 space-y-6">
+        <div class="border-b pb-4">
+            <h3 class="font-semibold text-gray-800 mb-1">Informacje podstawowe</h3>
+            <p class="text-sm text-gray-500">Nazwa i opis wyświetlane w przeglądarce i wyszukiwarkach.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Nazwa firmy / strony</label>
+                <input type="text" id="site_name" value="{{ settings.site_name }}"
+                    class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary outline-none">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Slogan</label>
+                <input type="text" id="site_tagline" value="{{ settings.site_tagline }}"
+                    class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary outline-none">
+            </div>
+        </div>
+
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Słowa kluczowe SEO</label>
+            <input type="text" id="seo_keywords" value="{{ settings.seo_keywords }}"
+                class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary outline-none"
+                placeholder="budowa, remont, firma budowlana warszawa">
+        </div>
+
+        <div class="border-b pb-4 pt-2">
+            <h3 class="font-semibold text-gray-800 mb-1">Dane kontaktowe</h3>
+            <p class="text-sm text-gray-500">Wyświetlane na stronie i w stopce.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                <input type="email" id="contact_email" value="{{ settings.contact_email }}"
+                    class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary outline-none">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Telefon</label>
+                <input type="text" id="contact_phone" value="{{ settings.contact_phone }}"
+                    class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary outline-none">
+            </div>
+        </div>
+
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Adres</label>
+            <textarea id="contact_address" rows="3"
+                class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary outline-none resize-none">{{ settings.contact_address }}</textarea>
+        </div>
+
+        <div class="flex items-center gap-3 pt-4 border-t">
+            <button type="submit" class="bg-primary hover:bg-amber-700 text-white px-6 py-2 rounded-lg font-medium transition-colors">
+                Zapisz ustawienia
+            </button>
+            <span id="saveMsg" class="text-sm text-green-600 hidden">Zapisano!</span>
+        </div>
+    </form>
+</div>
+
+<script>
+document.getElementById('settingsForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const data = {
+        site_name: document.getElementById('site_name').value,
+        site_tagline: document.getElementById('site_tagline').value,
+        contact_email: document.getElementById('contact_email').value,
+        contact_phone: document.getElementById('contact_phone').value,
+        contact_address: document.getElementById('contact_address').value,
+        seo_keywords: document.getElementById('seo_keywords').value
+    };
+
+    const res = await fetch('/api/settings', {
+        method: 'PUT',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(data)
+    });
+
+    if (res.ok) {
+        const msg = document.getElementById('saveMsg');
+        msg.classList.remove('hidden');
+        setTimeout(() => msg.classList.add('hidden'), 2000);
+    } else {
+        alert('Błąd zapisu');
+    }
+});
+</script>
+{% endblock %}
