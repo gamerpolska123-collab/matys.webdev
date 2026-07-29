@@ -12,7 +12,7 @@ if [[ -n $(git status -s) ]]; then
     git push -u origin main
     
     echo "Gotowe! Zmiany zostały wysłane na GitHub."
-    bash script/update.sh
+    bash scripts/update.sh
 else
     echo "Brak nowych zmian do wysłania."
 fi
