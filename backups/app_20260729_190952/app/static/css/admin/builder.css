@@ -1,4 +1,4 @@
-/* === Page Builder Styles – Etap 2 === */
+/* === Page Builder Styles === */
 .builder-section {
   transition: all 0.2s ease;
   border: 2px solid transparent;
@@ -33,19 +33,4 @@
   font-size: 0.65rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-}
-
-/* Modal edycji */
-.edit-modal-body {
-  max-height: 70vh;
-  overflow-y: auto;
-}
-.repeater-item {
-  border-left: 3px solid #f59e0b;
-}
-.gallery-items img {
-  transition: transform 0.2s;
-}
-.gallery-items img:hover {
-  transform: scale(1.05);
 }

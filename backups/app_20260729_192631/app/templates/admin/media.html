@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}Media{% endblock %}
+{% block header %}Biblioteka mediów{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <form id="uploadForm" class="bg-white rounded-xl shadow-sm border p-8 text-center border-dashed border-2 border-gray-300 hover:border-primary transition-colors cursor-pointer"
+          onclick="document.getElementById('fileInput').click()">
+        <input type="file" id="fileInput" multiple class="hidden" onchange="uploadFiles(this.files)">
+        <i class="fas fa-cloud-upload-alt text-4xl text-gray-300 mb-3"></i>
+        <p class="text-gray-600 font-medium">Kliknij lub przeciągnij pliki tutaj</p>
+        <p class="text-sm text-gray-400 mt-1">PNG, JPG, GIF, PDF do 10MB</p>
+    </form>
+</div>
+
+<div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4" id="mediaGrid">
+    {% for file in files %}
+    <div class="bg-white rounded-xl shadow-sm border overflow-hidden group relative">
+        <div class="aspect-square bg-gray-100 flex items-center justify-center">
+            {% if file.mime_type and file.mime_type.startswith('image/') %}
+            <img src="{{ file.file_path }}" class="w-full h-full object-cover" alt="{{ file.alt_text }}">
+            {% else %}
+            <i class="fas fa-file text-4xl text-gray-300"></i>
+            {% endif %}
+        </div>
+        <div class="p-3">
+            <p class="text-xs text-gray-600 truncate" title="{{ file.original_name }}">{{ file.original_name }}</p>
+            <p class="text-xs text-gray-400">{{ (file.file_size / 1024)|round(1) }} KB</p>
+        </div>
+        <button onclick="deleteFile({{ file.id }})" class="absolute top-2 right-2 w-7 h-7 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-xs shadow-lg">
+            <i class="fas fa-times"></i>
+        </button>
+    </div>
+    {% else %}
+    <div class="col-span-full text-center py-12 text-gray-500">
+        <i class="fas fa-images text-4xl mb-3 text-gray-300"></i>
+        <p>Brak plików. Dodaj pierwszy plik powyżej.</p>
+    </div>
+    {% endfor %}
+</div>
+
+<script>
+async function uploadFiles(files) {
+    for (const file of files) {
+        const formData = new FormData();
+        formData.append('file', file);
+        await fetch('/api/upload', { method: 'POST', body: formData });
+    }
+    location.reload();
+}
+
+async function deleteFile(id) {
+    if (!confirm('Usunąć ten plik?')) return;
+    const res = await fetch(`/api/media/${id}`, { method: 'DELETE' });
+    if (res.ok) location.reload();
+}
+</script>
+{% endblock %}

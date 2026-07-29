@@ -63,9 +63,6 @@ class SectionCreate(BaseModel):
     is_visible: Optional[bool] = True
     background_image: Optional[str] = ""
 
-class SectionReorder(BaseModel):
-    order: List[int]
-
 @router.get("/homepage/sections")
 async def list_homepage_sections(db: Session = Depends(get_db)):
     page = db.query(Page).filter(Page.is_homepage == True).first()
@@ -79,52 +76,46 @@ async def create_homepage_section(data: SectionCreate, db: Session = Depends(get
     if not page:
         page = Page(title="Strona główna", slug="", is_homepage=True, is_published=True, module="onepage")
         db.add(page); db.commit(); db.refresh(page)
-    # auto sort_order
-    max_order = db.query(PageSection.sort_order).filter(PageSection.page_id == page.id).order_by(PageSection.sort_order.desc()).first()
-    data_dict = data.dict()
-    data_dict["sort_order"] = (max_order[0] + 1) if max_order else 0
-    section = PageSection(page_id=page.id, **data_dict)
+    section = PageSection(page_id=page.id, **data.dict())
     db.add(section); db.commit(); db.refresh(section)
     return section
 
-@router.get("/sections/{section_id}")
-async def get_section(section_id: int, db: Session = Depends(get_db)):
+@router.put("/homepage/sections/{section_id}")
+async def update_homepage_section(section_id: int, data: SectionCreate, db: Session = Depends(get_db)):
     section = db.query(PageSection).filter(PageSection.id == section_id).first()
     if not section: raise HTTPException(status_code=404, detail="Section not found")
-    return section
-
-@router.put("/sections/{section_id}")
-async def update_section(section_id: int, data: SectionCreate, db: Session = Depends(get_db)):
-    section = db.query(PageSection).filter(PageSection.id == section_id).first()
-    if not section: raise HTTPException(status_code=404, detail="Section not found")
-    for field, value in data.dict(exclude_unset=True).items():
-        setattr(section, field, value)
+    for field, value in data.dict(exclude_unset=True).items(): setattr(section, field, value)
     db.commit(); db.refresh(section)
     return section
 
-@router.delete("/sections/{section_id}")
-async def delete_section(section_id: int, db: Session = Depends(get_db)):
+@router.delete("/homepage/sections/{section_id}")
+async def delete_homepage_section(section_id: int, db: Session = Depends(get_db)):
     section = db.query(PageSection).filter(PageSection.id == section_id).first()
     if not section: raise HTTPException(status_code=404, detail="Section not found")
     db.delete(section); db.commit()
     return {"ok": True}
 
-@router.post("/homepage/sections/reorder")
-async def reorder_sections(data: SectionReorder, db: Session = Depends(get_db)):
-    for idx, section_id in enumerate(data.order):
-        sec = db.query(PageSection).filter(PageSection.id == section_id).first()
-        if sec:
-            sec.sort_order = idx
-    db.commit()
-    return {"ok": True}
-
-@router.post("/homepage/sections/{section_id}/toggle")
-async def toggle_section(section_id: int, db: Session = Depends(get_db)):
+@router.post("/homepage/sections/{section_id}/sort")
+async def sort_section(section_id: int, direction: str, db: Session = Depends(get_db)):
+    """direction: 'up' lub 'down'"""
     section = db.query(PageSection).filter(PageSection.id == section_id).first()
     if not section: raise HTTPException(status_code=404, detail="Section not found")
-    section.is_visible = not section.is_visible
-    db.commit(); db.refresh(section)
-    return {"visible": section.is_visible}
+
+    if direction == "up":
+        other = db.query(PageSection).filter(
+            PageSection.page_id == section.page_id,
+            PageSection.sort_order < section.sort_order
+        ).order_by(PageSection.sort_order.desc()).first()
+    else:
+        other = db.query(PageSection).filter(
+            PageSection.page_id == section.page_id,
+            PageSection.sort_order > section.sort_order
+        ).order_by(PageSection.sort_order.asc()).first()
+
+    if other:
+        section.sort_order, other.sort_order = other.sort_order, section.sort_order
+        db.commit()
+    return {"ok": True}
 
 @router.post("/homepage/toggle-publish")
 async def toggle_publish(db: Session = Depends(get_db)):
@@ -133,47 +124,6 @@ async def toggle_publish(db: Session = Depends(get_db)):
     page.is_published = not page.is_published
     db.commit(); db.refresh(page)
     return {"published": page.is_published}
-
-# === PAGES CRUD ===
-class PageCreate(BaseModel):
-    title: str
-    slug: str
-    meta_description: Optional[str] = ""
-    is_published: Optional[bool] = False
-    is_homepage: Optional[bool] = False
-    module: Optional[str] = "onepage"
-    template: Optional[str] = "default"
-
-@router.get("/pages")
-async def list_pages(db: Session = Depends(get_db)):
-    return db.query(Page).order_by(Page.sort_order, Page.created_at.desc()).all()
-
-@router.post("/pages")
-async def create_page(data: PageCreate, db: Session = Depends(get_db)):
-    if db.query(Page).filter(Page.slug == data.slug).first():
-        raise HTTPException(status_code=400, detail="Slug already exists")
-    page = Page(**data.dict())
-    db.add(page); db.commit(); db.refresh(page)
-    return page
-
-@router.put("/pages/{page_id}")
-async def update_page(page_id: int, data: PageCreate, db: Session = Depends(get_db)):
-    page = db.query(Page).filter(Page.id == page_id).first()
-    if not page: raise HTTPException(status_code=404, detail="Page not found")
-    existing = db.query(Page).filter(Page.slug == data.slug, Page.id != page_id).first()
-    if existing:
-        raise HTTPException(status_code=400, detail="Slug already exists")
-    for field, value in data.dict(exclude_unset=True).items():
-        setattr(page, field, value)
-    db.commit(); db.refresh(page)
-    return page
-
-@router.delete("/pages/{page_id}")
-async def delete_page(page_id: int, db: Session = Depends(get_db)):
-    page = db.query(Page).filter(Page.id == page_id).first()
-    if not page: raise HTTPException(status_code=404, detail="Page not found")
-    db.delete(page); db.commit()
-    return {"ok": True}
 
 # === MEDIA ===
 @router.post("/upload")

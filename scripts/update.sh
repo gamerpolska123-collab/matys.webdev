@@ -1,30 +1,26 @@
 #!/bin/bash
-# Skrypt aktualizacji BuildCMS v1.1 – Etap 1
-# Użycie: bash scripts/update.sh
-
+# BuildCMS v1.1 – Etap 2: Page Builder Core
 set -e
 
-echo "[UPDATE] BuildCMS v1.1 Etap 1 – Szkielet Reusable"
-echo "[UPDATE] Nadpisuję app/templates, app/static, app/routers..."
-
-# Zakładamy że skrypt jest uruchamiany z root repo
+echo "[UPDATE] BuildCMS v1.1 Etap 2 – Page Builder Core"
 if [ ! -f "docker-compose.yml" ]; then
-    echo "[ERROR] Uruchom z root repozytorium (gdzie jest docker-compose.yml)"
+    echo "[ERROR] Uruchom z root repozytorium"
     exit 1
 fi
 
-# Kopia zapasowa starego app/
 BACKUP_DIR="backups/app_$(date +%Y%m%d_%H%M%S)"
 mkdir -p "$BACKUP_DIR"
 cp -r app "$BACKUP_DIR/" 2>/dev/null || true
-echo "[UPDATE] Stary app/ skopiowany do $BACKUP_DIR"
+cp -r modules "$BACKUP_DIR/" 2>/dev/null || true
+echo "[UPDATE] Backup w $BACKUP_DIR"
 
-# Nadpisanie plików
-rsync -av --exclude='__pycache__' update_etap1/app/ app/
-rsync -av update_etap1/scripts/ scripts/
+rsync -av --exclude='__pycache__' update_etap2/app/ app/
+rsync -av --exclude='__pycache__' update_etap2/modules/ modules/
+rsync -av update_etap2/scripts/ scripts/
 
-echo "[UPDATE] Pliki zaktualizowane."
-echo "[UPDATE] Restartuję kontenery..."
+echo "[UPDATE] Pliki zaktualizowane. Restart..."
 docker compose restart
 
-echo "[UPDATE] Gotowe. Sprawdź http://twoj-serwer:85/admin/builder"
+echo "[UPDATE] Gotowe. Sprawdź:"
+echo "  - /admin/builder (drag & drop, edycja sekcji)"
+echo "  - / (strona główna z sekcjami)"
