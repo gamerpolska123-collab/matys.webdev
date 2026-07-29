@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ site.site_name if site else 'Firma Budowlana' }}</title>
+  <meta name="description" content="{{ site.site_tagline if site else 'Profesjonalne usługi budowlane' }}">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    html { scroll-behavior: smooth; }
+    .hero-bg { background-size: cover; background-position: center; }
+    .fade-in { animation: fadeIn 0.8s ease-out; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+  </style>
+</head>
+<body class="font-sans text-gray-800 antialiased">
+
+  <!-- Navbar -->
+  <nav class="fixed w-full z-50 bg-white/95 backdrop-blur shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex justify-between items-center h-16">
+        <a href="#" class="text-xl font-bold text-gray-900 flex items-center gap-2">
+          <div class="w-8 h-8 bg-amber-500 rounded-lg flex items-center justify-center text-white text-sm font-bold">
+            {{ site.site_name[0] if site and site.site_name else 'B' }}
+          </div>
+          {{ site.site_name if site else 'BuildMAX' }}
+        </a>
+        <div class="hidden md:flex items-center gap-8">
+          {% for section in sections if section.is_visible %}
+            <a href="#sec-{{ section.id }}" class="text-gray-600 hover:text-amber-600 font-medium transition-colors text-sm">{{ section.title or section.section_type }}</a>
+          {% endfor %}
+          <a href="tel:{{ site.contact_phone if site else '+48123456789' }}" class="bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+            <i class="fas fa-phone mr-1"></i> Zadzwoń
+          </a>
+        </div>
+        <button id="mobileMenuBtn" class="md:hidden text-gray-600 text-xl">
+          <i class="fas fa-bars"></i>
+        </button>
+      </div>
+    </div>
+    <!-- Mobile menu -->
+    <div id="mobileMenu" class="hidden md:hidden bg-white border-t">
+      <div class="px-4 py-3 space-y-2">
+        {% for section in sections if section.is_visible %}
+          <a href="#sec-{{ section.id }}" class="block text-gray-600 hover:text-amber-600 font-medium py-2">{{ section.title or section.section_type }}</a>
+        {% endfor %}
+      </div>
+    </div>
+  </nav>
+
+  <!-- Sections -->
+  {% for section in sections if section.is_visible %}
+    {% set data = section.content_json or {} %}
+
+    <!-- HERO -->
+    {% if section.section_type == 'hero' %}
+    <section id="sec-{{ section.id }}" class="relative min-h-[90vh] flex items-center justify-center hero-bg" style="background-image: url('{{ data.background_image or '' }}');">
+      <div class="absolute inset-0" style="background-color: {{ data.overlay_color or 'rgba(0,0,0,0.5)' }}"></div>
+      <div class="relative z-10 text-center px-4 max-w-4xl mx-auto fade-in">
+        <h1 class="text-4xl md:text-6xl font-bold text-white mb-4">{{ data.heading or site.site_name or 'Firma Budowlana' }}</h1>
+        <p class="text-lg md:text-xl text-gray-200 mb-8">{{ data.subheading or site.site_tagline or 'Budujemy z pasją' }}</p>
+        {% if data.button_text %}
+        <a href="{{ data.button_url or '#' }}" class="inline-block bg-amber-500 hover:bg-amber-600 text-white px-8 py-3 rounded-lg font-semibold text-lg transition-colors">
+          {{ data.button_text }}
+        </a>
+        {% endif %}
+      </div>
+    </section>
+
+    <!-- ABOUT -->
+    {% elif section.section_type == 'about' %}
+    <section id="sec-{{ section.id }}" class="py-16 md:py-24 bg-white">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="grid md:grid-cols-2 gap-12 items-center {{ 'md:flex-row-reverse' if data.image_position == 'left' else '' }}">
+          <div class="{{ 'md:order-2' if data.image_position == 'left' else 'md:order-1' }}">
+            <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-6">{{ data.heading or 'O nas' }}</h2>
+            <div class="prose text-gray-600 leading-relaxed">{{ (data.content or 'Opis firmy...')|safe }}</div>
+          </div>
+          <div class="{{ 'md:order-1' if data.image_position == 'left' else 'md:order-2' }}">
+            {% if data.image %}
+            <img src="{{ data.image }}" alt="{{ data.heading }}" class="rounded-2xl shadow-lg w-full object-cover h-80">
+            {% else %}
+            <div class="bg-gray-100 rounded-2xl h-80 flex items-center justify-center text-gray-400">
+              <i class="fas fa-image text-4xl"></i>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SERVICES -->
+    {% elif section.section_type == 'services' %}
+    <section id="sec-{{ section.id }}" class="py-16 md:py-24 bg-gray-50">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-12">
+          <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">{{ data.heading or 'Nasze usługi' }}</h2>
+          <div class="w-16 h-1 bg-amber-500 mx-auto rounded"></div>
+        </div>
+        <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
+          {% for item in data.items or [] %}
+          <div class="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow border border-gray-100">
+            <div class="w-12 h-12 bg-amber-100 text-amber-600 rounded-lg flex items-center justify-center text-xl mb-4">
+              <i class="fas {{ item.icon or 'fa-tools' }}"></i>
+            </div>
+            <h3 class="text-lg font-bold text-gray-900 mb-2">{{ item.title or 'Usługa' }}</h3>
+            <p class="text-gray-600 text-sm">{{ item.desc or '' }}</p>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </section>
+
+    <!-- GALLERY -->
+    {% elif section.section_type == 'gallery' %}
+    <section id="sec-{{ section.id }}" class="py-16 md:py-24 bg-white">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-12">
+          <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">{{ data.heading or 'Galeria' }}</h2>
+          <div class="w-16 h-1 bg-amber-500 mx-auto rounded"></div>
+        </div>
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          {% for img in data.images or [] %}
+          <div class="aspect-square rounded-xl overflow-hidden group">
+            <img src="{{ img }}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" alt="">
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </section>
+
+    <!-- CONTACT -->
+    {% elif section.section_type == 'contact' %}
+    <section id="sec-{{ section.id }}" class="py-16 md:py-24 bg-gray-900 text-white">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="grid md:grid-cols-2 gap-12">
+          <div>
+            <h2 class="text-3xl md:text-4xl font-bold mb-6">{{ data.heading or 'Skontaktuj się z nami' }}</h2>
+            <p class="text-gray-300 mb-8">Jesteśmy do Twojej dyspozycji. Napisz lub zadzwoń – odpowiemy najszybciej jak to możliwe.</p>
+            <div class="space-y-4">
+              {% if data.phone or site.contact_phone %}
+              <div class="flex items-center gap-4">
+                <div class="w-10 h-10 bg-amber-500 rounded-lg flex items-center justify-center"><i class="fas fa-phone"></i></div>
+                <div><p class="text-xs text-gray-400">Telefon</p><p class="font-medium">{{ data.phone or site.contact_phone }}</p></div>
+              </div>
+              {% endif %}
+              {% if data.email or site.contact_email %}
+              <div class="flex items-center gap-4">
+                <div class="w-10 h-10 bg-amber-500 rounded-lg flex items-center justify-center"><i class="fas fa-envelope"></i></div>
+                <div><p class="text-xs text-gray-400">Email</p><p class="font-medium">{{ data.email or site.contact_email }}</p></div>
+              </div>
+              {% endif %}
+              {% if data.address or site.contact_address %}
+              <div class="flex items-center gap-4">
+                <div class="w-10 h-10 bg-amber-500 rounded-lg flex items-center justify-center"><i class="fas fa-map-marker-alt"></i></div>
+                <div><p class="text-xs text-gray-400">Adres</p><p class="font-medium">{{ (data.address or site.contact_address)|replace('\n', '<br>')|safe }}</p></div>
+              </div>
+              {% endif %}
+            </div>
+          </div>
+          <div class="bg-white/10 rounded-2xl p-8 backdrop-blur">
+            <form onsubmit="event.preventDefault(); alert('Formularz w przygotowaniu – skontaktuj się telefonicznie.');" class="space-y-4">
+              <input type="text" placeholder="Twoje imię" class="w-full px-4 py-3 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-400 focus:outline-none focus:border-amber-500">
+              <input type="email" placeholder="Email" class="w-full px-4 py-3 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-400 focus:outline-none focus:border-amber-500">
+              <textarea rows="4" placeholder="Wiadomość" class="w-full px-4 py-3 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-400 focus:outline-none focus:border-amber-500"></textarea>
+              <button type="submit" class="w-full bg-amber-500 hover:bg-amber-600 text-white py-3 rounded-lg font-semibold transition-colors">Wyślij wiadomość</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CTA -->
+    {% elif section.section_type == 'cta' %}
+    <section id="sec-{{ section.id }}" class="relative py-20 md:py-28 hero-bg" style="background-image: url('{{ data.background_image or '' }}');">
+      <div class="absolute inset-0 bg-gray-900/70"></div>
+      <div class="relative z-10 max-w-4xl mx-auto px-4 text-center">
+        <h2 class="text-3xl md:text-5xl font-bold text-white mb-6">{{ data.heading or 'Zacznijmy współpracę!' }}</h2>
+        {% if data.button_text %}
+        <a href="{{ data.button_url or '#contact' }}" class="inline-block bg-amber-500 hover:bg-amber-600 text-white px-8 py-3 rounded-lg font-semibold text-lg transition-colors">
+          {{ data.button_text }}
+        </a>
+        {% endif %}
+      </div>
+    </section>
+
+    <!-- TEXT -->
+    {% elif section.section_type == 'text' %}
+    <section id="sec-{{ section.id }}" class="py-16 md:py-24 bg-white">
+      <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+        {% if data.heading %}<h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-6 text-center">{{ data.heading }}</h2>{% endif %}
+        <div class="prose prose-lg text-gray-600 mx-auto">{{ (data.content or '')|safe }}</div>
+      </div>
+    </section>
+
+    <!-- FEATURES -->
+    {% elif section.section_type == 'features' %}
+    <section id="sec-{{ section.id }}" class="py-16 md:py-24 bg-amber-50">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-12">
+          <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">{{ data.heading or 'Dlaczego my?' }}</h2>
+          <div class="w-16 h-1 bg-amber-500 mx-auto rounded"></div>
+        </div>
+        <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
+          {% for item in data.items or [] %}
+          <div class="text-center">
+            <div class="w-16 h-16 bg-white text-amber-600 rounded-2xl flex items-center justify-center text-2xl mx-auto mb-4 shadow-sm">
+              <i class="fas {{ item.icon or 'fa-star' }}"></i>
+            </div>
+            <div class="text-3xl font-bold text-gray-900 mb-1">{{ item.value or '0' }}</div>
+            <div class="text-gray-600 text-sm">{{ item.label or '' }}</div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </section>
+    {% endif %}
+
+  {% else %}
+    <!-- Fallback gdy brak sekcji -->
+    <section class="min-h-screen flex items-center justify-center bg-gray-50">
+      <div class="text-center px-4">
+        <i class="fas fa-hard-hat text-6xl text-amber-500 mb-4"></i>
+        <h1 class="text-4xl font-bold text-gray-900 mb-2">{{ site.site_name if site else 'Firma Budowlana' }}</h1>
+        <p class="text-gray-600">{{ site.site_tagline if site else 'Strona w budowie. Dodaj sekcje w panelu admina.' }}</p>
+        <a href="/admin/builder" class="inline-block mt-6 bg-amber-500 hover:bg-amber-600 text-white px-6 py-2 rounded-lg font-medium">Przejdź do panelu</a>
+      </div>
+    </section>
+  {% endfor %}
+
+  <!-- Footer -->
+  <footer class="bg-gray-900 text-gray-400 py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-4">
+      <p class="text-sm">&copy; {{ site.site_name if site else 'Firma Budowlana' }} – wszelkie prawa zastrzeżone.</p>
+      <div class="flex gap-4">
+        {% if site.facebook_url %}<a href="{{ site.facebook_url }}" target="_blank" class="hover:text-white transition-colors"><i class="fab fa-facebook"></i></a>{% endif %}
+        {% if site.instagram_url %}<a href="{{ site.instagram_url }}" target="_blank" class="hover:text-white transition-colors"><i class="fab fa-instagram"></i></a>{% endif %}
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    document.getElementById('mobileMenuBtn').addEventListener('click', () => {
+      document.getElementById('mobileMenu').classList.toggle('hidden');
+    });
+    document.querySelectorAll('#mobileMenu a').forEach(a => {
+      a.addEventListener('click', () => document.getElementById('mobileMenu').classList.add('hidden'));
+    });
+  </script>
+</body>
+</html>
