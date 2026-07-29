@@ -1,6 +1,6 @@
 # Construction CMS
 
-test Profesjonalny system CMS dla firm budowlanych.
+Debung Profesjonalny system CMS dla firm budowlanych.
 Zoptymalizowany pod Raspberry Pi + Docker.
 
 ## Szybki start
