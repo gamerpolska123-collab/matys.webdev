@@ -1,6 +1,6 @@
 # Construction CMS
 
-Profesjonalny system CMS dla firm budowlanych.
+test Profesjonalny system CMS dla firm budowlanych.
 Zoptymalizowany pod Raspberry Pi + Docker.
 
 ## Szybki start
