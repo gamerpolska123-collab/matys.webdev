@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+{% block title %}Kreator strony{% endblock %}
+{% block header %}Kreator strony{% endblock %}
+
+{% block content %}
+<div class="flex flex-col lg:flex-row gap-4 h-[calc(100vh-180px)]">
+  <!-- Lewy panel: lista sekcji -->
+  <div class="builder-sidebar w-full lg:w-80 flex-shrink-0 bg-white rounded-xl shadow-sm border flex flex-col">
+    <div class="p-4 border-b flex items-center justify-between">
+      <h2 class="font-semibold text-gray-800">Sekcje</h2>
+      <button onclick="UI.modal('addSectionModal', true)" class="bg-amber-500 hover:bg-amber-600 text-white px-3 py-1.5 rounded-lg text-sm font-medium transition-colors">
+        <i class="fas fa-plus mr-1"></i> Dodaj
+      </button>
+    </div>
+    <div id="builder-sections" class="flex-1 overflow-y-auto p-3 space-y-2">
+      {% for section in sections %}
+      <div class="builder-section bg-gray-50 rounded-lg p-3 cursor-move relative" draggable="true" data-id="{{ section.id }}">
+        <div class="flex items-center gap-3">
+          <i class="fas fa-grip-vertical text-gray-400"></i>
+          <div class="flex-1 min-w-0">
+            <p class="font-medium text-sm text-gray-800 truncate">{{ section.title or 'Bez tytułu' }}</p>
+            <span class="section-type-badge text-gray-500 bg-gray-200 px-1.5 py-0.5 rounded">{{ section.section_type }}</span>
+          </div>
+          <button class="toggle-visibility {{ 'text-green-600' if section.is_visible else 'text-gray-400' }}" data-id="{{ section.id }}">
+            <i class="fas fa-eye{{ '-slash' if not section.is_visible else '' }}"></i>
+          </button>
+        </div>
+        <div class="builder-toolbar">
+          <button onclick="editSection({{ section.id }})" class="w-7 h-7 bg-blue-100 text-blue-600 rounded hover:bg-blue-200 flex items-center justify-center" title="Edytuj">
+            <i class="fas fa-pencil-alt text-xs"></i>
+          </button>
+          <button onclick="deleteSection({{ section.id }})" class="w-7 h-7 bg-red-100 text-red-600 rounded hover:bg-red-200 flex items-center justify-center" title="Usuń">
+            <i class="fas fa-trash text-xs"></i>
+          </button>
+        </div>
+      </div>
+      {% else %}
+      <div class="text-center py-8 text-gray-400">
+        <i class="fas fa-layer-group text-3xl mb-2"></i>
+        <p class="text-sm">Brak sekcji. Dodaj pierwszą!</p>
+      </div>
+      {% endfor %}
+    </div>
+    <div class="p-3 border-t bg-gray-50 rounded-b-xl flex gap-2">
+      <button onclick="document.getElementById('previewFrame').contentWindow.location.reload()" class="flex-1 py-2 text-sm text-gray-600 hover:text-gray-800 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors">
+        <i class="fas fa-sync-alt mr-1"></i> Odśwież
+      </button>
+      <button onclick="togglePublish()" class="flex-1 py-2 text-sm {{ 'text-green-600 border-green-300 hover:bg-green-50' if page.is_published else 'text-gray-600 border-gray-300 hover:bg-gray-100' }} border rounded-lg transition-colors">
+        <i class="fas {{ 'fa-check-circle' if page.is_published else 'fa-eye-slash' }}"></i> {{ 'Opublikowana' if page.is_published else 'Opublikuj' }}
+      </button>
+    </div>
+  </div>
+
+  <!-- Prawy panel: podgląd live -->
+  <div class="flex-1 flex flex-col min-w-0">
+    <div class="flex items-center justify-between mb-2">
+      <div class="flex items-center gap-2">
+        <span class="text-sm font-medium text-gray-600">Podgląd:</span>
+        <button id="previewToggle" class="bg-gray-600 hover:bg-gray-700 text-white px-3 py-1 rounded-lg text-xs font-medium transition-colors flex items-center gap-1">
+          <i class="fas fa-mobile-alt"></i> Mobile
+        </button>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="text-xs text-gray-500">{{ page.title }}</span>
+        <span class="px-2 py-0.5 rounded-full text-xs font-medium {{ 'bg-green-100 text-green-700' if page.is_published else 'bg-gray-100 text-gray-600' }}">
+          {{ 'Opublikowana' if page.is_published else 'Szkic' }}
+        </span>
+      </div>
+    </div>
+    <iframe id="previewFrame" src="/" class="preview-frame flex-1 rounded-xl shadow-sm"></iframe>
+  </div>
+</div>
+
+<!-- Modal: Dodaj sekcję -->
+<div id="addSectionModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50 p-4">
+  <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+    <div class="p-5 border-b flex items-center justify-between">
+      <h3 class="font-bold text-lg">Dodaj sekcję</h3>
+      <button onclick="UI.modal('addSectionModal', false)" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="p-5 grid grid-cols-2 gap-3">
+      {% set types = [
+        ('hero', 'Hero / Baner', 'fa-image', 'bg-orange-50 text-orange-600'),
+        ('about', 'O nas', 'fa-building', 'bg-blue-50 text-blue-600'),
+        ('services', 'Usługi', 'fa-tools', 'bg-green-50 text-green-600'),
+        ('gallery', 'Galeria', 'fa-images', 'bg-purple-50 text-purple-600'),
+        ('contact', 'Kontakt', 'fa-envelope', 'bg-red-50 text-red-600'),
+        ('cta', 'Call to Action', 'fa-bullhorn', 'bg-amber-50 text-amber-600'),
+        ('text', 'Tekst', 'fa-align-left', 'bg-gray-50 text-gray-600'),
+        ('features', 'Cechy / Liczniki', 'fa-star', 'bg-teal-50 text-teal-600')
+      ] %}
+      {% for value, label, icon, color in types %}
+      <button onclick="addSection('{{ value }}')" class="flex flex-col items-center gap-2 p-4 rounded-xl border-2 border-transparent hover:border-amber-400 hover:bg-amber-50 transition-all text-center">
+        <div class="w-12 h-12 rounded-xl {{ color }} flex items-center justify-center text-xl">
+          <i class="fas {{ icon }}"></i>
+        </div>
+        <span class="text-sm font-medium text-gray-700">{{ label }}</span>
+      </button>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Edytuj sekcję -->
+<div id="editSectionModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50 p-4">
+  <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col">
+    <div class="p-5 border-b flex items-center justify-between">
+      <h3 class="font-bold text-lg">Edytuj sekcję</h3>
+      <button onclick="UI.modal('editSectionModal', false)" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times"></i></button>
+    </div>
+    <form id="editSectionForm" class="flex-1 flex flex-col min-h-0">
+      <div class="edit-modal-body p-5 space-y-4">
+        <input type="hidden" id="editSectionId">
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Tytuł (dla admina)</label>
+            <input type="text" id="editSectionTitle" name="title" class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-amber-400 outline-none">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Typ</label>
+            <input type="text" id="editSectionType" readonly class="w-full px-3 py-2 bg-gray-100 border border-gray-200 rounded-lg text-gray-500 cursor-not-allowed">
+          </div>
+        </div>
+        <div id="editSectionFields" class="space-y-4"></div>
+      </div>
+      <div class="p-5 border-t flex justify-end gap-3 bg-gray-50 rounded-b-xl">
+        <button type="button" onclick="UI.modal('editSectionModal', false)" class="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium">Anuluj</button>
+        <button type="submit" class="px-6 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg font-medium transition-colors">Zapisz zmiany</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="/static/js/admin/section-editor.js"></script>
+<script>
+async function togglePublish() {
+  try {
+    const res = await api.post('/api/homepage/toggle-publish');
+    UI.toast(res.published ? 'Strona opublikowana' : 'Strona wycofana');
+    location.reload();
+  } catch (e) {
+    UI.toast(e.message, 'error');
+  }
+}
+</script>
+{% endblock %}
