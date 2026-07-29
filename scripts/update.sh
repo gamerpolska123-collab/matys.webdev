@@ -1,74 +1,30 @@
 #!/bin/bash
-# ============================================================
-# Construction CMS - Skrypt aktualizacji
-# Użycie: ./scripts/update.sh [wersja]
-# ============================================================
+# Skrypt aktualizacji BuildCMS v1.1 – Etap 1
+# Użycie: bash scripts/update.sh
 
 set -e
 
-CMS_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-BACKUP_DIR="$CMS_DIR/backups"
-TIMESTAMP=$(date +%Y%m%d_%H%M%S)
-VERSION="${1:-latest}"
+echo "[UPDATE] BuildCMS v1.1 Etap 1 – Szkielet Reusable"
+echo "[UPDATE] Nadpisuję app/templates, app/static, app/routers..."
 
-echo "=========================================="
-echo "  Construction CMS - Aktualizacja"
-echo "  Wersja docelowa: $VERSION"
-echo "=========================================="
-echo ""
+# Zakładamy że skrypt jest uruchamiany z root repo
+if [ ! -f "docker-compose.yml" ]; then
+    echo "[ERROR] Uruchom z root repozytorium (gdzie jest docker-compose.yml)"
+    exit 1
+fi
 
-# 1. Backup bazy danych
-echo "[1/6] Tworzenie backupu bazy danych..."
+# Kopia zapasowa starego app/
+BACKUP_DIR="backups/app_$(date +%Y%m%d_%H%M%S)"
 mkdir -p "$BACKUP_DIR"
-if [ -f "$CMS_DIR/data/cms.db" ]; then
-    cp "$CMS_DIR/data/cms.db" "$BACKUP_DIR/cms.db.$TIMESTAMP.bak"
-    echo "      ✓ Backup zapisany: backups/cms.db.$TIMESTAMP.bak"
-else
-    echo "      ℹ Brak bazy do backupu (pierwsze uruchomienie?)"
-fi
+cp -r app "$BACKUP_DIR/" 2>/dev/null || true
+echo "[UPDATE] Stary app/ skopiowany do $BACKUP_DIR"
 
-# 2. Backup uploads
-echo "[2/6] Tworzenie backupu plików..."
-if [ -d "$CMS_DIR/uploads" ] && [ "$(ls -A $CMS_DIR/uploads)" ]; then
-    tar -czf "$BACKUP_DIR/uploads.$TIMESTAMP.tar.gz" -C "$CMS_DIR" uploads/
-    echo "      ✓ Backup uploads: backups/uploads.$TIMESTAMP.tar.gz"
-else
-    echo "      ℹ Brak plików do backupu"
-fi
+# Nadpisanie plików
+rsync -av --exclude='__pycache__' update_etap1/app/ app/
+rsync -av update_etap1/scripts/ scripts/
 
-# 3. Zatrzymanie kontenerów
-echo "[3/6] Zatrzymywanie kontenerów..."
-cd "$CMS_DIR"
-docker compose down
+echo "[UPDATE] Pliki zaktualizowane."
+echo "[UPDATE] Restartuję kontenery..."
+docker compose restart
 
-# 4. Aktualizacja kodu (przykład dla git)
-echo "[4/6] Aktualizacja kodu..."
-if [ -d ".git" ]; then
-    git fetch origin
-    git checkout "$VERSION" || git pull origin main
-    echo "      ✓ Kod zaktualizowany przez git"
-else
-    echo "      ℹ Brak repozytorium git. Ręcznie podmień pliki app/ i modules/"
-    echo "      ℹ Twoje dane w data/ i uploads/ oraz .env są BEZPIECZNE"
-fi
-
-# 5. Przebudowa obrazu (tylko jeśli requirements się zmieniły)
-echo "[5/6] Przebudowa obrazu Docker..."
-docker compose build --no-cache
-
-# 6. Uruchomienie
-echo "[6/6] Uruchamianie..."
-docker compose up -d
-
-echo ""
-echo "=========================================="
-echo "  ✓ Aktualizacja zakończona!"
-echo "=========================================="
-echo ""
-echo "Sprawdź status:"
-echo "  docker compose ps"
-echo "  docker logs -f matys-cms-app"
-echo ""
-echo "Wersja API:"
-echo "  curl http://localhost:85/api/version"
-echo ""
+echo "[UPDATE] Gotowe. Sprawdź http://twoj-serwer:85/admin/builder"

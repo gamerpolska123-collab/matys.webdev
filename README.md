@@ -1,330 +1,174 @@
-# 🏗️ Construction CMS v1.0.1
+# 🏗️ BuildCMS – Notatki Deweloperskie (v1.1)
 
-Profesjonalny system CMS dla firm budowlanych.  
-Zoptymalizowany pod Raspberry Pi + Docker.
-
----
-
-## 📑 Spis treści
-
-- [🏗️ Construction CMS v1.0.1](#️-construction-cms-v101)
-  - [📑 Spis treści](#-spis-treści)
-  - [🗂️ Pełny spis plików (Mapa Repozytorium)](#️-pełny-spis-plików-mapa-repozytorium)
-    - [📁 Główne pliki konfiguracyjne](#-główne-pliki-konfiguracyjne)
-    - [📁 app/ – Kod aplikacji backend](#-app-kod-aplikacji-backend)
-    - [📁 app/core/ – Rdzeń systemu](#-appcore-rdzeń-systemu)
-    - [📁 app/models/ – Modele bazy danych](#-appmodels-modele-bazy-danych)
-    - [📁 app/routers/ – Endpointy API](#-approuters-endpointy-api)
-    - [📁 app/templates/ – Szablony HTML](#-apptemplates-szablony-html)
-    - [📁 app/templates/admin/ – Panel administracyjny](#-apptemplatesadmin-panel-administracyjny)
-    - [📁 app/templates/admin/pages/ – Zarządzanie stronami](#-apptemplatesadminpages-zarządzanie-stronami)
-    - [📁 app/templates/auth/ – Autentykacja](#-apptemplatesauth-autentykacja)
-    - [📁 modules/ – Moduły rozszerzeń](#-modules-moduły-rozszerzeń)
-    - [📁 modules/onepage/ – Strona wizytówka](#-modulesonepage-strona-wizytówka)
-    - [📁 modules/blog/ – Blog (placeholder)](#-modulesblog-blog-placeholder)
-    - [📁 modules/shop/ – Sklep (placeholder)](#-modulesshop-sklep-placeholder)
-    - [📁 alembic/ – Migracje bazy (Alembic)](#-alembic-migracje-bazy-alembic)
-    - [📁 migrations/ – Migracje bazy (kopia)](#-migrations-migracje-bazy-kopia)
-    - [📁 scripts/ – Skrypty pomocnicze](#-scripts-skrypty-pomocnicze)
-    - [📁 docker/ – Pliki Docker (alternatywne)](#-docker-pliki-docker-alternatywne)
-    - [📁 data/ – Baza danych SQLite](#-data-baza-danych-sqlite)
-    - [📁 backups/ – Kopie zapasowe](#-backups-kopie-zapasowe)
-  - [🚀 Szybki start](#-szybki-start)
-    - [1. Pierwsze uruchomienie](#1-pierwsze-uruchomienie)
-    - [2. Panel administracyjny](#2-panel-administracyjny)
-    - [3. Aktualizacja (bez utraty danych!)](#3-aktualizacja-bez-utraty-danych)
-  - [🔌 Porty](#-porty)
-  - [📦 Moduły](#-moduły)
-  - [🔒 Bezpieczeństwo (PRZED produkcją!)](#-bezpieczeństwo-przed-produkcją)
-  - [🌐 API](#-api)
-  - [💾 Backup ręczny](#-backup-ręczny)
-  - [📝 Notatki deweloperskie](#-notatki-deweloperskie)
+> TEN PLIK JEST DLA MNIE (AI). Zawiera roadmapę, spis plików, decyzje architektoniczne i checklistę.
+> Użytkownik go nie czyta – ma być moim szybkim źródłem kontekstu.
 
 ---
 
-## 🗂️ Pełny spis plików (Mapa Repozytorium)
+## 📌 Aktualny stan (Etap 1 ✅)
 
-> Kliknij nazwę pliku, aby przejść bezpośrednio do jego zawartości na GitHub.
+**Wersja:** 1.1-dev-etap1  
+**Data:** 2026-07-29  
+**Co działa:**
+- [x] Podział JS na reusable moduły (`api-client`, `drag-drop`, `ui-utils`, `mobile-preview`)
+- [x] Komponenty UI (`sidebar`, `navbar`, `toast`)
+- [x] Nowy `base.html` z mobile-first layoutem
+- [x] Szkielet Page Buildera (`/admin/builder`) z listą sekcji + iframe preview
+- [x] Endpoint `/admin/builder` w `admin.py`
+- [x] `update.sh` do wgrywania aktualizacji
 
-### 📁 Główne pliki konfiguracyjne
-
-| Plik | Opis | Link |
-|------|------|------|
-| `README.md` | Ten plik – dokumentacja projektu | [Otwórz](https://github.com/gamerpolska123-collab/matys.webdev/blob/main/README.md) |
-| `.env` | Konfiguracja środowiska (persistence) | [Otwórz](https://github.com/gamerpolska123-collab/matys.webdev/blob/main/.env) |
-| `.env.example` | Szablon konfiguracji | [Otwórz](https://github.com/gamerpolska123-collab/matys.webdev/blob/main/.env.example) |
-| `.dockerignore` | Ignorowane pliki w Dockerze | [Otwórz](https://github.com/gamerpolska123-collab/matys.webdev/blob/main/.dockerignore) |
-| `Dockerfile` | Obraz Docker aplikacji | [Otwórz](https://github.com/gamerpolska123-collab/matys.webdev/blob/main/Dockerfile) |
-| `docker-compose.yml` | Konfiguracja Docker Compose | [Otwórz](https://github.com/gamerpolska123-collab/matys.webdev/blob/main/docker-compose.yml) |
-| `nginx.conf` | Konfiguracja serwera Nginx | [Otwórz](https://github.com/gamerpolska123-collab/matys.webdev/blob/main/nginx.conf) |
-| `requirements.txt` | Zależności Python | [Otwórz](https://github.com/gamerpolska123-collab/matys.webdev/blob/main/requirements.txt) |
-| `alembic.ini` | Konfiguracja migracji Alembic | [Otwórz](https://github.com/gamerpolska123-collab/matys.webdev/blob/main/alembic.ini) |
-| `start.sh` | Skrypt startowy aplikacji | [Otwórz](https://github.com/gamerpolska123-collab/matys.webdev/blob/main/start.sh) |
-| `update.sh` | Skrypt aktualizacji (root) | [Otwórz](https://github.com/gamerpolska123-collab/matys.webdev/blob/main/update.sh) |
-
-### 📁 app/ – Kod aplikacji backend
-
-> **⚠️ Nadpisywany przy aktualizacji!**
-
-| Plik | Opis | Link |
-|------|------|------|
-| `app/__init__.py` | Inicjalizacja pakietu app | [Otwórz](https://github.com/gamerpolska123-collab/matys.webdev/blob/main/app/__init__.py) |
-| `app/__version__.py` | Wersja aplikacji | [Otwórz](https://github.com/gamerpolska123-collab/matys.webdev/blob/main/app/__version__.py) |
-| `app/main.py` | Główny plik aplikacji FastAPI | [Otwórz](https://github.com/gamerpolska123-collab/matys.webdev/blob/main/app/main.py) |
-| `app/config.py` | Konfiguracja aplikacji (pydantic) | [Otwórz](https://github.com/gamerpolska123-collab/matys.webdev/blob/main/app/config.py) |
-| `app/database.py` | Połączenie z bazą SQLite + session | [Otwórz](https://github.com/gamerpolska123-collab/matys.webdev/blob/main/app/database.py) |
-
-### 📁 app/core/ – Rdzeń systemu
-
-| Plik | Opis | Link |
-|------|------|------|
-| `app/core/__init__.py` | Inicjalizacja pakietu core | [Otwórz](https://github.com/gamerpolska123-collab/matys.webdev/blob/main/app/core/__init__.py) |
-| `app/core/security.py` | Haszowanie haseł, tokeny JWT | [Otwórz](https://github.com/gamerpolska123-collab/matys.webdev/blob/main/app/core/security.py) |
-| `app/core/module_manager.py` | Menadżer modułów (ładowanie) | [Otwórz](https://github.com/gamerpolska123-collab/matys.webdev/blob/main/app/core/module_manager.py) |
-
-### 📁 app/models/ – Modele bazy danych
-
-| Plik | Opis | Link |
-|------|------|------|
-| `app/models/__init__.py` | Eksport modeli | [Otwórz](https://github.com/gamerpolska123-collab/matys.webdev/blob/main/app/models/__init__.py) |
-| `app/models/base.py` | Baza modeli SQLAlchemy | [Otwórz](https://github.com/gamerpolska123-collab/matys.webdev/blob/main/app/models/base.py) |
-| `app/models/user.py` | Model użytkownika | [Otwórz](https://github.com/gamerpolska123-collab/matys.webdev/blob/main/app/models/user.py) |
-| `app/models/page.py` | Model strony CMS | [Otwórz](https://github.com/gamerpolska123-collab/matys.webdev/blob/main/app/models/page.py) |
-| `app/models/site.py` | Model ustawień strony | [Otwórz](https://github.com/gamerpolska123-collab/matys.webdev/blob/main/app/models/site.py) |
-| `app/models/media.py` | Model plików/multimediów | [Otwórz](https://github.com/gamerpolska123-collab/matys.webdev/blob/main/app/models/media.py) |
-
-### 📁 app/routers/ – Endpointy API
-
-| Plik | Opis | Link |
-|------|------|------|
-| `app/routers/__init__.py` | Inicjalizacja routerów | [Otwórz](https://github.com/gamerpolska123-collab/matys.webdev/blob/main/app/routers/__init__.py) |
-| `app/routers/auth.py` | Logowanie, wylogowanie, tokeny | [Otwórz](https://github.com/gamerpolska123-collab/matys.webdev/blob/main/app/routers/auth.py) |
-| `app/routers/admin.py` | Panel admina (strony, ustawienia) | [Otwórz](https://github.com/gamerpolska123-collab/matys.webdev/blob/main/app/routers/admin.py) |
-| `app/routers/api.py` | Publiczne API (CRUD stron, media) | [Otwórz](https://github.com/gamerpolska123-collab/matys.webdev/blob/main/app/routers/api.py) |
-
-### 📁 app/templates/ – Szablony HTML
-
-| Plik | Opis | Link |
-|------|------|------|
-| `app/templates/base.html` | Bazowy layout HTML (Jinja2) | [Otwórz](https://github.com/gamerpolska123-collab/matys.webdev/blob/main/app/templates/base.html) |
-
-### 📁 app/templates/admin/ – Panel administracyjny
-
-| Plik | Opis | Link |
-|------|------|------|
-| `app/templates/admin/dashboard.html` | Dashboard admina | [Otwórz](https://github.com/gamerpolska123-collab/matys.webdev/blob/main/app/templates/admin/dashboard.html) |
-| `app/templates/admin/media.html` | Zarządzanie mediami | [Otwórz](https://github.com/gamerpolska123-collab/matys.webdev/blob/main/app/templates/admin/media.html) |
-| `app/templates/admin/sections.html` | Zarządzanie sekcjami stron | [Otwórz](https://github.com/gamerpolska123-collab/matys.webdev/blob/main/app/templates/admin/sections.html) |
-| `app/templates/admin/settings.html` | Ustawienia strony | [Otwórz](https://github.com/gamerpolska123-collab/matys.webdev/blob/main/app/templates/admin/settings.html) |
-
-### 📁 app/templates/admin/pages/ – Zarządzanie stronami
-
-| Plik | Opis | Link |
-|------|------|------|
-| `app/templates/admin/pages/list.html` | Lista stron CMS | [Otwórz](https://github.com/gamerpolska123-collab/matys.webdev/blob/main/app/templates/admin/pages/list.html) |
-| `app/templates/admin/pages/edit.html` | Edycja strony | [Otwórz](https://github.com/gamerpolska123-collab/matys.webdev/blob/main/app/templates/admin/pages/edit.html) |
-| `app/templates/admin/pages/sections.html` | Edycja sekcji strony | [Otwórz](https://github.com/gamerpolska123-collab/matys.webdev/blob/main/app/templates/admin/pages/sections.html) |
-
-### 📁 app/templates/auth/ – Autentykacja
-
-| Plik | Opis | Link |
-|------|------|------|
-| `app/templates/auth/login.html` | Formularz logowania | [Otwórz](https://github.com/gamerpolska123-collab/matys.webdev/blob/main/app/templates/auth/login.html) |
-
-### 📁 modules/ – Moduły rozszerzeń
-
-> **⚠️ Nadpisywane przy aktualizacji!**
-
-| Plik | Opis | Link |
-|------|------|------|
-| `modules/__init__.py` | Inicjalizacja modułów | [Otwórz](https://github.com/gamerpolska123-collab/matys.webdev/blob/main/modules/__init__.py) |
-
-### 📁 modules/onepage/ – Strona wizytówka
-
-| Plik | Opis | Link |
-|------|------|------|
-| `modules/onepage/__init__.py` | Router + logika modułu OnePage | [Otwórz](https://github.com/gamerpolska123-collab/matys.webdev/blob/main/modules/onepage/__init__.py) |
-| `modules/onepage/templates/index.html` | Szablon strony wizytówki | [Otwórz](https://github.com/gamerpolska123-collab/matys.webdev/blob/main/modules/onepage/templates/index.html) |
-
-### 📁 modules/blog/ – Blog (placeholder)
-
-| Plik | Opis | Link |
-|------|------|------|
-| `modules/blog/__init__.py` | Placeholder modułu bloga | [Otwórz](https://github.com/gamerpolska123-collab/matys.webdev/blob/main/modules/blog/__init__.py) |
-
-### 📁 modules/shop/ – Sklep (placeholder)
-
-| Plik | Opis | Link |
-|------|------|------|
-| `modules/shop/__init__.py` | Placeholder modułu sklepu | [Otwórz](https://github.com/gamerpolska123-collab/matys.webdev/blob/main/modules/shop/__init__.py) |
-
-### 📁 alembic/ – Migracje bazy (Alembic)
-
-| Plik | Opis | Link |
-|------|------|------|
-| `alembic/README` | Opis migracji | [Otwórz](https://github.com/gamerpolska123-collab/matys.webdev/blob/main/alembic/README) |
-| `alembic/env.py` | Środowisko migracji | [Otwórz](https://github.com/gamerpolska123-collab/matys.webdev/blob/main/alembic/env.py) |
-| `alembic/script.py.mako` | Szablon nowej migracji | [Otwórz](https://github.com/gamerpolska123-collab/matys.webdev/blob/main/alembic/script.py.mako) |
-
-### 📁 migrations/ – Migracje bazy (kopia)
-
-| Plik | Opis | Link |
-|------|------|------|
-| `migrations/README` | Opis migracji | [Otwórz](https://github.com/gamerpolska123-collab/matys.webdev/blob/main/migrations/README) |
-| `migrations/env.py` | Środowisko migracji | [Otwórz](https://github.com/gamerpolska123-collab/matys.webdev/blob/main/migrations/env.py) |
-| `migrations/script.py.mako` | Szablon nowej migracji | [Otwórz](https://github.com/gamerpolska123-collab/matys.webdev/blob/main/migrations/script.py.mako) |
-| `migrations/versions/.gitkeep` | Placeholder folderu wersji | [Otwórz](https://github.com/gamerpolska123-collab/matys.webdev/blob/main/migrations/versions/.gitkeep) |
-
-### 📁 scripts/ – Skrypty pomocnicze
-
-| Plik | Opis | Link |
-|------|------|------|
-| `scripts/update.sh` | ⭐ Główny skrypt aktualizacji | [Otwórz](https://github.com/gamerpolska123-collab/matys.webdev/blob/main/scripts/update.sh) |
-| `scripts/backup.sh` | ⭐ Ręczny backup bazy + uploads | [Otwórz](https://github.com/gamerpolska123-collab/matys.webdev/blob/main/scripts/backup.sh) |
-
-### 📁 docker/ – Pliki Docker (alternatywne)
-
-| Plik | Opis | Link |
-|------|------|------|
-| `docker/Dockerfile` | Alternatywny Dockerfile | [Otwórz](https://github.com/gamerpolska123-collab/matys.webdev/blob/main/docker/Dockerfile) |
-| `docker/docker-compose.yml` | Alternatywny docker-compose | [Otwórz](https://github.com/gamerpolska123-collab/matys.webdev/blob/main/docker/docker-compose.yml) |
-| `docker/nginx.conf` | Alternatywna konfiguracja Nginx | [Otwórz](https://github.com/gamerpolska123-collab/matys.webdev/blob/main/docker/nginx.conf) |
-
-### 📁 data/ – Baza danych SQLite
-
-> **🔒 PERSISTENT – NIE nadpisuj przy aktualizacji!**
-
-| Plik | Opis | Link |
-|------|------|------|
-| `data/cms.db` | Główna baza SQLite | [Otwórz](https://github.com/gamerpolska123-collab/matys.webdev/blob/main/data/cms.db) |
-
-### 📁 backups/ – Kopie zapasowe
-
-| Plik | Opis | Link |
-|------|------|------|
-| `backups/cms.db.20260729_153355.bak` | Przykładowy backup bazy | [Otwórz](https://github.com/gamerpolska123-collab/matys.webdev/blob/main/backups/cms.db.20260729_153355.bak) |
+**Co jeszcze NIE działa (Etap 2+):**
+- [ ] Drag & drop nie zapisuje kolejności w bazie (brak endpointu `/api/homepage/sections/reorder`)
+- [ ] Brak modalu edycji elementu w sekcji
+- [ ] Brak predefiniowanych szablonów HTML dla sekcji (hero, about, services...)
+- [ ] Frontend onepage nie jest w pełni responsywny
+- [ ] Brak endpointu `/api/homepage/sections/{id}/toggle`
 
 ---
 
-## 🚀 Szybki start
+## 🗂️ Mapa plików (co gdzie jest)
 
-### 1. Pierwsze uruchomienie
+### Reusable JS (przyszłe projekty)
+| Plik | Co robi | Zależności |
+|------|---------|------------|
+| `app/static/js/admin/api-client.js` | Fetch wrapper z obsługą błędów | Brak |
+| `app/static/js/admin/drag-drop.js` | Sortable drag & drop | Brak |
+| `app/static/js/admin/ui-utils.js` | Toast, confirm, modal toggle | Brak |
+| `app/static/js/admin/mobile-preview.js` | Toggle iframe width mobile/desktop | Brak |
+| `app/static/js/admin/page-builder.js` | Główny kontroler buildera | api-client, drag-drop, ui-utils |
 
-```bash
-# Skopiuj szablon konfiguracji
-cp .env.example .env
+### Komponenty HTML (reusable)
+| Plik | Co zawiera |
+|------|------------|
+| `app/templates/admin/components/sidebar.html` | Menu boczne z modułami, responsive (hamburger) |
+| `app/templates/admin/components/navbar.html` | Górny pasek z togglem sidebaru, user, preview link |
+| `app/templates/admin/components/toast.html` | Kontener na powiadomienia (zarządzany przez ui-utils.js) |
 
-# Edytuj .env (zmień SECRET_KEY i hasło admina!)
-nano .env
+### Style
+| Plik | Co zawiera |
+|------|------------|
+| `app/static/css/admin/builder.css` | Style buildera (hover, toolbar, preview-frame) |
+| `app/static/css/admin/responsive.css` | Poprawki mobilne admina (sidebar, builder) |
 
-# Uruchom
-docker compose up --build -d
+### Szablony
+| Plik | Co zawiera |
+|------|------------|
+| `app/templates/base.html` | NOWY layout: sidebar + navbar + main, ładuje wszystkie JS reusable |
+| `app/templates/admin/builder/index.html` | Główny ekran buildera: lista sekcji (lewo) + iframe preview (prawo) |
 
-# Sprawdź
-curl http://localhost:85/health
-curl http://localhost:85/api/version
+### Backend
+| Plik | Co zawiera |
+|------|------------|
+| `app/routers/admin.py` | Endpointy HTML: `/admin`, `/admin/builder`, `/admin/pages/*`, `/admin/settings`, `/admin/media` |
+| `app/routers/api.py` | Endpointy JSON: CRUD sekcji, settings, media, upload |
+| `app/models/page.py` | `Page` + `PageSection` (pole `content_json` do przyszłej edycji elementów) |
+
+---
+
+## 🛣️ Roadmapa do v1.1
+
+### Etap 1: Szkielet Reusable ✅
+Cel: Podzielić kod na moduły, poprawić base.html, stworzyć szkielet buildera.
+
+### Etap 2: Page Builder Core ⏳
+**Pliki do zmiany/dodania:**
+- `app/routers/api.py` – dodać:
+  - `POST /api/homepage/sections/reorder` (przyjmuje `{order: [id1, id2, ...]}`)
+  - `POST /api/homepage/sections/{id}/toggle` (przełącza `is_visible`)
+  - `GET /api/sections/{id}` (pobiera pełne dane sekcji do edycji)
+- `app/static/js/admin/page-builder.js` – podpiąć prawdziwe API do DnD i toggle
+- `app/templates/admin/builder/index.html` – modal edycji sekcji (title, type, content)
+- `modules/onepage/templates/index.html` – dodać renderowanie sekcji po typach z `content_json`
+
+**Szablony sekcji (predefiniowane HTML w `content_json` lub w szablonie Jinja):**
+- `hero` – baner z tłem, nagłówkiem, przyciskiem
+- `about` – tekst + obraz
+- `services` – grid kart usług
+- `gallery` – grid zdjęć
+- `contact` – dane kontaktowe + mapa
+- `cta` – call to action
+- `text` – zwykły tekst
+- `features` – liczniki/ikony
+
+### Etap 3: Edycja Elementów ⏳
+**Pliki do zmiany:**
+- `app/templates/admin/builder/edit-modal.html` – modal z edycją pól JSON sekcji
+- `app/static/js/admin/section-editor.js` – nowy moduł: edycja pól formularza na podstawie typu sekcji
+- `app/routers/api.py` – `PUT /api/sections/{id}` rozbudowany o walidację `content_json`
+
+**Typy pól w edytorze:**
+- text, textarea, image (z pickerem mediów), color, select, repeater (lista elementów)
+
+### Etap 4: Mobile & UX ⏳
+**Pliki do zmiany:**
+- `modules/onepage/templates/index.html` – dodać `<meta viewport>`, poprawić klasy Tailwind (md:, lg:)
+- `app/static/css/admin/responsive.css` – dopracować breakpointy
+- `app/templates/admin/builder/index.html` – mobilny podgląd w iframe (375px)
+
+### Etap 5: Stabilizacja v1.1 ⏳
+**Pliki do zmiany:**
+- `app/routers/api.py` – dodać brakujące endpointy CRUD dla `Page` (POST/PUT/DELETE `/api/pages/{id}`)
+- `app/__version__.py` – zmienić na `1.1.0`
+- `README.md` (użytkownika) – zaktualizować dokumentację
+
+---
+
+## 🔧 Decyzje architektoniczne
+
+1. **Reusable JS** – każdy plik JS to samodzielny moduł bez zależności zewnętrznych (poza Tailwind/FontAwesome w HTML). Można skopiować do innego projektu.
+2. **content_json** – pole JSON w `PageSection` przechowuje strukturę elementów w sekcji. Przykład dla `hero`:
+   ```json
+   {
+     "heading": "Firma Budowlana MAX",
+     "subheading": "Budujemy z pasją od 1998",
+     "button_text": "Zadzwoń",
+     "button_url": "tel:+48123456789",
+     "background_image": "/uploads/hero.jpg",
+     "overlay_color": "rgba(0,0,0,0.5)"
+   }
+   ```
+3. **Szablony Jinja vs JSON** – frontend (`modules/onepage/templates/index.html`) renderuje sekcje na podstawie `section_type` + `content_json`. Nie przechowujemy pełnego HTML w bazie.
+4. **Mobile preview** – iframe z src="/" + toggle width 375px/100%. Nie wymaga osobnego endpointu.
+
+---
+
+## 🐍 Snippety (kopiuj-wklej)
+
+### Dodanie endpointu reorder w api.py:
+```python
+class SectionReorder(BaseModel):
+    order: List[int]
+
+@router.post("/homepage/sections/reorder")
+async def reorder_sections(data: SectionReorder, db: Session = Depends(get_db)):
+    for idx, section_id in enumerate(data.order):
+        sec = db.query(PageSection).filter(PageSection.id == section_id).first()
+        if sec:
+            sec.sort_order = idx
+    db.commit()
+    return {"ok": True}
 ```
 
-### 2. Panel administracyjny
-
-- **URL:** `http://twoj-serwer:85/admin`
-- **Login:** `admin@firma.pl`
-- **Hasło:** (z pliku `.env`, domyślnie `admin123`)
-
-### 3. Aktualizacja (bez utraty danych!)
-
-```bash
-# Sposób 1: Skrypt automatyczny (zalecany)
-./scripts/update.sh
-
-# Sposób 2: Ręcznie
-docker compose down
-# Podmień pliki w app/ i modules/
-docker compose up --build -d
-```
-
-**Co jest bezpieczne (nie ginie przy aktualizacji):**
-- `data/cms.db` – baza danych
-- `uploads/` – wgrane pliki
-- `.env` – konfiguracja
-- `backups/` – kopie zapasowe
-
-**Co się aktualizuje:**
-- `app/` – kod backendu
-- `modules/` – moduły
-- `requirements.txt` – zależności
-- `Dockerfile` – obraz
-
----
-
-## 🔌 Porty
-
-| Usługa | Port wewnętrzny | Port zewnętrzny |
-|--------|-----------------|-----------------|
-| App    | 8000            | tylko Docker    |
-| Nginx  | 80              | 85 (konfiguracja w `.env`) |
-
----
-
-## 📦 Moduły
-
-| Moduł   | Status         | Opis              |
-|---------|----------------|-------------------|
-| OnePage | ✅ Gotowe      | Strona wizytówka  |
-| Blog    | ⏳ Placeholder | W przygotowaniu  |
-| Sklep   | ⏳ Placeholder | W przygotowaniu  |
-
----
-
-## 🔒 Bezpieczeństwo (PRZED produkcją!)
-
-Zmień w `.env`:
-
-```bash
-SECRET_KEY=twoj-losowy-klucz-min-50-znakow
-ADMIN_PASSWORD=silne-haslo-min-12-znakow
+### Dodanie endpointu toggle w api.py:
+```python
+@router.post("/homepage/sections/{section_id}/toggle")
+async def toggle_section(section_id: int, db: Session = Depends(get_db)):
+    section = db.query(PageSection).filter(PageSection.id == section_id).first()
+    if not section: raise HTTPException(404, "Section not found")
+    section.is_visible = not section.is_visible
+    db.commit(); db.refresh(section)
+    return {"visible": section.is_visible}
 ```
 
 ---
 
-## 🌐 API
+## ✅ Checklist przed kolejnym etapem
 
-| Endpoint           | Metoda | Opis                  |
-|--------------------|--------|-----------------------|
-| `/health`          | GET    | Status serwera        |
-| `/api/version`     | GET    | Wersja aplikacji      |
-| `/docs`            | GET    | Swagger UI (dokumentacja) |
-
----
-
-## 💾 Backup ręczny
-
-```bash
-./scripts/backup.sh
-```
-
-Tworzy kopie w `backups/`:
-- `cms.db.YYYYMMDD_HHMMSS.bak`
-- `uploads.YYYYMMDD_HHMMSS.tar.gz`
+- [ ] Użytkownik potwierdził że Etap 1 działa (panel admina się otwiera, builder się wyświetla)
+- [ ] Pliki są na GitHub (użytkownik ręcznie pushuje)
+- [ ] Docker działa po restarcie
+- [ ] Brak błędów 500 w `/admin/builder`
 
 ---
 
-## 📝 Notatki deweloperskie
-
-> Ten plik README jest twoją **mapą nawigacyjną** repozytorium.  
-> Każdy plik ma bezpośredni link do GitHub – kliknij i edytuj bez szukania.
-
-**Wskazówki dla przyszłego siebie:**
-- Chcesz zmienić wygląd strony? → `modules/onepage/templates/index.html`
-- Chcesz dodać endpoint API? → `app/routers/api.py`
-- Chcesz zmienić model bazy? → `app/models/` + `alembic/env.py`
-- Chcesz zmienić panel admina? → `app/templates/admin/`
-- Chcesz zmienić haszowanie/tokeny? → `app/core/security.py`
-- Chcesz dodać nowy moduł? → Utwórz folder w `modules/` i zarejestruj w `app/core/module_manager.py`
-- Chcesz zmienić porty? → `.env` + `docker-compose.yml`
-- Chcesz zrobić backup? → `./scripts/backup.sh`
-- Chcesz zaktualizować? → `./scripts/update.sh`
-
----
-
-*Ostatnia aktualizacja mapy: 2026-07-29*
+*Ostatnia aktualizacja: 2026-07-29 – Etap 1 zakończony*
