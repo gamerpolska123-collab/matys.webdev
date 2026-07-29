@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Panel{% endblock %} | BuildCMS</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="/static/css/admin/builder.css">
+  <link rel="stylesheet" href="/static/css/admin/responsive.css">
+  {% block extra_css %}{% endblock %}
+</head>
+<body class="bg-gray-100 text-gray-800 min-h-screen flex flex-col md:flex-row">
+
+  <!-- Sidebar -->
+  {% include "admin/components/sidebar.html" %}
+
+  <!-- Main -->
+  <div class="flex-1 flex flex-col min-h-screen admin-main md:ml-64 transition-all">
+    <!-- Navbar -->
+    {% include "admin/components/navbar.html" %}
+
+    <!-- Content -->
+    <main class="flex-1 p-4 md:p-8 overflow-y-auto">
+      <div class="max-w-7xl mx-auto">
+        <header class="mb-6 md:mb-8">
+          <h1 class="text-2xl md:text-3xl font-bold text-gray-800">{% block header %}Dashboard{% endblock %}</h1>
+        </header>
+        {% block content %}{% endblock %}
+      </div>
+    </main>
+  </div>
+
+  <!-- Toast -->
+  {% include "admin/components/toast.html" %}
+
+  <!-- Reusable JS -->
+  <script src="/static/js/admin/api-client.js"></script>
+  <script src="/static/js/admin/ui-utils.js"></script>
+  <script src="/static/js/admin/drag-drop.js"></script>
+  <script src="/static/js/admin/mobile-preview.js"></script>
+  <script src="/static/js/admin/page-builder.js"></script>
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

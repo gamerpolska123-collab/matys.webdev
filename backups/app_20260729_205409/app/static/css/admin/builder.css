@@ -1,0 +1,86 @@
+/* === BuildCMS Inline Builder – Professional Dark Theme === */
+
+/* Canvas section wrapper */
+.builder-canvas-section {
+  position: relative;
+}
+.builder-canvas-section:hover {
+  border-color: #f59e0b !important;
+}
+.builder-canvas-section [contenteditable="true"] {
+  outline: 2px solid #f59e0b;
+  outline-offset: 2px;
+  border-radius: 4px;
+  background: rgba(245, 158, 11, 0.05);
+  cursor: text;
+}
+
+/* Preview mobile mode */
+#previewCanvas.preview-mobile {
+  max-width: 375px;
+  border-radius: 16px;
+  box-shadow: 0 0 0 8px #1e293b, 0 25px 50px -12px rgba(0,0,0,0.8);
+}
+
+/* Scrollbar styling */
+#previewCanvas::-webkit-scrollbar,
+#outlineTree::-webkit-scrollbar,
+#propertyPanel::-webkit-scrollbar {
+  width: 6px;
+}
+#previewCanvas::-webkit-scrollbar-thumb,
+#outlineTree::-webkit-scrollbar-thumb,
+#propertyPanel::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 3px;
+}
+#previewCanvas::-webkit-scrollbar-track,
+#outlineTree::-webkit-scrollbar-track,
+#propertyPanel::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Outline tree items (dark theme overrides) */
+.outline-item {
+  border-radius: 6px;
+  user-select: none;
+  transition: all 0.15s ease;
+}
+.outline-item:hover {
+  background: #1e293b;
+  color: #e2e8f0;
+}
+
+/* Property panel inputs (dark theme) */
+#propertyPanel input,
+#propertyPanel textarea,
+#propertyPanel select {
+  background: #0f172a;
+  border-color: #334155;
+  color: #e2e8f0;
+}
+#propertyPanel input:focus,
+#propertyPanel textarea:focus,
+#propertyPanel select:focus {
+  border-color: #f59e0b;
+  ring-color: #f59e0b;
+}
+#propertyPanel label {
+  color: #64748b;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Prevent text selection on toolbar */
+.builder-canvas-section .absolute {
+  user-select: none;
+}
+
+/* Smooth transitions */
+.builder-canvas-section,
+.builder-canvas-section * {
+  transition-property: border-color, box-shadow, opacity;
+  transition-duration: 0.15s;
+  transition-timing-function: ease;
+}
