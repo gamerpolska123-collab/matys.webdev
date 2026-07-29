@@ -12,12 +12,61 @@
     .hero-bg { background-size: cover; background-position: center; }
     .fade-in { animation: fadeIn 0.8s ease-out; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    /* Builder outline styles (only active when in iframe) */
+    .builder-outline section[data-section-id] {
+      position: relative;
+      cursor: pointer;
+    }
+    .builder-outline section[data-section-id]::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border: 2px solid transparent;
+      pointer-events: none;
+      transition: border-color 0.15s ease, background-color 0.15s ease;
+      z-index: 9998;
+    }
+    .builder-outline section[data-section-id]:hover::after {
+      border-color: #f59e0b;
+      background: rgba(245,158,11,0.04);
+    }
+    .builder-outline section[data-section-id].builder-active::after {
+      border-color: #f59e0b;
+      background: rgba(245,158,11,0.08);
+      box-shadow: inset 0 0 0 2px #f59e0b;
+    }
+    .builder-outline section[data-section-id].builder-active {
+      position: relative;
+    }
+    .builder-outline .builder-section-label {
+      position: absolute;
+      top: 0;
+      left: 0;
+      background: #f59e0b;
+      color: #0f172a;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 10px;
+      border-radius: 0 0 4px 0;
+      z-index: 9999;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.15s;
+    }
+    .builder-outline section[data-section-id]:hover .builder-section-label,
+    .builder-outline section[data-section-id].builder-active .builder-section-label {
+      opacity: 1;
+    }
+    /* Prevent link clicks in builder mode */
+    .builder-outline a[href]:not([href^="#"]) {
+      pointer-events: none !important;
+    }
   </style>
 </head>
-<body class="font-sans text-gray-800 antialiased">
+<body class="font-sans text-gray-800 antialiased {{ 'builder-outline' if request.query_params.get('builder') == '1' else '' }}">
 
   <!-- Navbar -->
-  <nav class="fixed w-full z-50 bg-white/95 backdrop-blur shadow-sm">
+  <nav class="fixed w-full z-40 bg-white/95 backdrop-blur shadow-sm" data-builder-ignore>
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="flex justify-between items-center h-16">
         <a href="#" class="text-xl font-bold text-gray-900 flex items-center gap-2">
@@ -39,7 +88,6 @@
         </button>
       </div>
     </div>
-    <!-- Mobile menu -->
     <div id="mobileMenu" class="hidden md:hidden bg-white border-t">
       <div class="px-4 py-3 space-y-2">
         {% for section in sections if section.is_visible %}
@@ -55,31 +103,32 @@
 
     <!-- HERO -->
     {% if section.section_type == 'hero' %}
-    <section id="sec-{{ section.id }}" class="relative min-h-[90vh] flex items-center justify-center hero-bg" style="background-image: url('{{ data.background_image or '' }}');">
+    <section id="sec-{{ section.id }}" data-section-id="{{ section.id }}" data-section-type="hero" class="relative min-h-[90vh] flex items-center justify-center hero-bg" style="background-image: url('{{ data.background_image or '' }}');">
       <div class="absolute inset-0" style="background-color: {{ data.overlay_color or 'rgba(0,0,0,0.5)' }}"></div>
       <div class="relative z-10 text-center px-4 max-w-4xl mx-auto fade-in">
-        <h1 class="text-4xl md:text-6xl font-bold text-white mb-4">{{ data.heading or site.site_name or 'Firma Budowlana' }}</h1>
-        <p class="text-lg md:text-xl text-gray-200 mb-8">{{ data.subheading or site.site_tagline or 'Budujemy z pasją' }}</p>
+        <h1 data-editable="heading" class="text-4xl md:text-6xl font-bold text-white mb-4">{{ data.heading or site.site_name or 'Firma Budowlana' }}</h1>
+        <p data-editable="subheading" class="text-lg md:text-xl text-gray-200 mb-8">{{ data.subheading or site.site_tagline or 'Budujemy z pasją' }}</p>
         {% if data.button_text %}
         <a href="{{ data.button_url or '#' }}" class="inline-block bg-amber-500 hover:bg-amber-600 text-white px-8 py-3 rounded-lg font-semibold text-lg transition-colors">
           {{ data.button_text }}
         </a>
         {% endif %}
       </div>
+      <span class="builder-section-label">Hero</span>
     </section>
 
     <!-- ABOUT -->
     {% elif section.section_type == 'about' %}
-    <section id="sec-{{ section.id }}" class="py-16 md:py-24 bg-white">
+    <section id="sec-{{ section.id }}" data-section-id="{{ section.id }}" data-section-type="about" class="py-16 md:py-24 bg-white">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="grid md:grid-cols-2 gap-12 items-center {{ 'md:flex-row-reverse' if data.image_position == 'left' else '' }}">
+        <div class="grid md:grid-cols-2 gap-12 items-center">
           <div class="{{ 'md:order-2' if data.image_position == 'left' else 'md:order-1' }}">
-            <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-6">{{ data.heading or 'O nas' }}</h2>
-            <div class="prose text-gray-600 leading-relaxed">{{ (data.content or 'Opis firmy...')|safe }}</div>
+            <h2 data-editable="heading" class="text-3xl md:text-4xl font-bold text-gray-900 mb-6">{{ data.heading or 'O nas' }}</h2>
+            <div data-editable="content" class="prose text-gray-600 leading-relaxed">{{ (data.content or 'Opis firmy...')|safe }}</div>
           </div>
           <div class="{{ 'md:order-1' if data.image_position == 'left' else 'md:order-2' }}">
             {% if data.image %}
-            <img src="{{ data.image }}" alt="{{ data.heading }}" class="rounded-2xl shadow-lg w-full object-cover h-80">
+            <img data-editable="image" src="{{ data.image }}" alt="{{ data.heading }}" class="rounded-2xl shadow-lg w-full object-cover h-80">
             {% else %}
             <div class="bg-gray-100 rounded-2xl h-80 flex items-center justify-center text-gray-400">
               <i class="fas fa-image text-4xl"></i>
@@ -88,14 +137,15 @@
           </div>
         </div>
       </div>
+      <span class="builder-section-label">O nas</span>
     </section>
 
     <!-- SERVICES -->
     {% elif section.section_type == 'services' %}
-    <section id="sec-{{ section.id }}" class="py-16 md:py-24 bg-gray-50">
+    <section id="sec-{{ section.id }}" data-section-id="{{ section.id }}" data-section-type="services" class="py-16 md:py-24 bg-gray-50">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center mb-12">
-          <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">{{ data.heading or 'Nasze usługi' }}</h2>
+          <h2 data-editable="heading" class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">{{ data.heading or 'Nasze usługi' }}</h2>
           <div class="w-16 h-1 bg-amber-500 mx-auto rounded"></div>
         </div>
         <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -110,14 +160,15 @@
           {% endfor %}
         </div>
       </div>
+      <span class="builder-section-label">Usługi</span>
     </section>
 
     <!-- GALLERY -->
     {% elif section.section_type == 'gallery' %}
-    <section id="sec-{{ section.id }}" class="py-16 md:py-24 bg-white">
+    <section id="sec-{{ section.id }}" data-section-id="{{ section.id }}" data-section-type="gallery" class="py-16 md:py-24 bg-white">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center mb-12">
-          <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">{{ data.heading or 'Galeria' }}</h2>
+          <h2 data-editable="heading" class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">{{ data.heading or 'Galeria' }}</h2>
           <div class="w-16 h-1 bg-amber-500 mx-auto rounded"></div>
         </div>
         <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
@@ -128,39 +179,40 @@
           {% endfor %}
         </div>
       </div>
+      <span class="builder-section-label">Galeria</span>
     </section>
 
     <!-- CONTACT -->
     {% elif section.section_type == 'contact' %}
-    <section id="sec-{{ section.id }}" class="py-16 md:py-24 bg-gray-900 text-white">
+    <section id="sec-{{ section.id }}" data-section-id="{{ section.id }}" data-section-type="contact" class="py-16 md:py-24 bg-gray-900 text-white">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="grid md:grid-cols-2 gap-12">
           <div>
-            <h2 class="text-3xl md:text-4xl font-bold mb-6">{{ data.heading or 'Skontaktuj się z nami' }}</h2>
+            <h2 data-editable="heading" class="text-3xl md:text-4xl font-bold mb-6">{{ data.heading or 'Skontaktuj się z nami' }}</h2>
             <p class="text-gray-300 mb-8">Jesteśmy do Twojej dyspozycji. Napisz lub zadzwoń – odpowiemy najszybciej jak to możliwe.</p>
             <div class="space-y-4">
               {% if data.phone or site.contact_phone %}
               <div class="flex items-center gap-4">
                 <div class="w-10 h-10 bg-amber-500 rounded-lg flex items-center justify-center"><i class="fas fa-phone"></i></div>
-                <div><p class="text-xs text-gray-400">Telefon</p><p class="font-medium">{{ data.phone or site.contact_phone }}</p></div>
+                <div><p class="text-xs text-gray-400">Telefon</p><p data-editable="phone" class="font-medium">{{ data.phone or site.contact_phone }}</p></div>
               </div>
               {% endif %}
               {% if data.email or site.contact_email %}
               <div class="flex items-center gap-4">
                 <div class="w-10 h-10 bg-amber-500 rounded-lg flex items-center justify-center"><i class="fas fa-envelope"></i></div>
-                <div><p class="text-xs text-gray-400">Email</p><p class="font-medium">{{ data.email or site.contact_email }}</p></div>
+                <div><p class="text-xs text-gray-400">Email</p><p data-editable="email" class="font-medium">{{ data.email or site.contact_email }}</p></div>
               </div>
               {% endif %}
               {% if data.address or site.contact_address %}
               <div class="flex items-center gap-4">
                 <div class="w-10 h-10 bg-amber-500 rounded-lg flex items-center justify-center"><i class="fas fa-map-marker-alt"></i></div>
-                <div><p class="text-xs text-gray-400">Adres</p><p class="font-medium">{{ (data.address or site.contact_address)|replace('\n', '<br>')|safe }}</p></div>
+                <div><p class="text-xs text-gray-400">Adres</p><p data-editable="address" class="font-medium">{{ (data.address or site.contact_address)|replace('\n', '<br>')|safe }}</p></div>
               </div>
               {% endif %}
             </div>
           </div>
           <div class="bg-white/10 rounded-2xl p-8 backdrop-blur">
-            <form onsubmit="event.preventDefault(); alert('Formularz w przygotowaniu – skontaktuj się telefonicznie.');" class="space-y-4">
+            <form onsubmit="event.preventDefault(); alert('Formularz w przygotowaniu.');" class="space-y-4">
               <input type="text" placeholder="Twoje imię" class="w-full px-4 py-3 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-400 focus:outline-none focus:border-amber-500">
               <input type="email" placeholder="Email" class="w-full px-4 py-3 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-400 focus:outline-none focus:border-amber-500">
               <textarea rows="4" placeholder="Wiadomość" class="w-full px-4 py-3 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-400 focus:outline-none focus:border-amber-500"></textarea>
@@ -169,37 +221,40 @@
           </div>
         </div>
       </div>
+      <span class="builder-section-label">Kontakt</span>
     </section>
 
     <!-- CTA -->
     {% elif section.section_type == 'cta' %}
-    <section id="sec-{{ section.id }}" class="relative py-20 md:py-28 hero-bg" style="background-image: url('{{ data.background_image or '' }}');">
+    <section id="sec-{{ section.id }}" data-section-id="{{ section.id }}" data-section-type="cta" class="relative py-20 md:py-28 hero-bg" style="background-image: url('{{ data.background_image or '' }}');">
       <div class="absolute inset-0 bg-gray-900/70"></div>
       <div class="relative z-10 max-w-4xl mx-auto px-4 text-center">
-        <h2 class="text-3xl md:text-5xl font-bold text-white mb-6">{{ data.heading or 'Zacznijmy współpracę!' }}</h2>
+        <h2 data-editable="heading" class="text-3xl md:text-5xl font-bold text-white mb-6">{{ data.heading or 'Zacznijmy współpracę!' }}</h2>
         {% if data.button_text %}
-        <a href="{{ data.button_url or '#contact' }}" class="inline-block bg-amber-500 hover:bg-amber-600 text-white px-8 py-3 rounded-lg font-semibold text-lg transition-colors">
+        <a href="{{ data.button_url or '#' }}" class="inline-block bg-amber-500 hover:bg-amber-600 text-white px-8 py-3 rounded-lg font-semibold text-lg transition-colors">
           {{ data.button_text }}
         </a>
         {% endif %}
       </div>
+      <span class="builder-section-label">CTA</span>
     </section>
 
     <!-- TEXT -->
     {% elif section.section_type == 'text' %}
-    <section id="sec-{{ section.id }}" class="py-16 md:py-24 bg-white">
+    <section id="sec-{{ section.id }}" data-section-id="{{ section.id }}" data-section-type="text" class="py-16 md:py-24 bg-white">
       <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-        {% if data.heading %}<h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-6 text-center">{{ data.heading }}</h2>{% endif %}
-        <div class="prose prose-lg text-gray-600 mx-auto">{{ (data.content or '')|safe }}</div>
+        {% if data.heading %}<h2 data-editable="heading" class="text-3xl md:text-4xl font-bold text-gray-900 mb-6 text-center">{{ data.heading }}</h2>{% endif %}
+        <div data-editable="content" class="prose prose-lg text-gray-600 mx-auto">{{ (data.content or '')|safe }}</div>
       </div>
+      <span class="builder-section-label">Tekst</span>
     </section>
 
     <!-- FEATURES -->
     {% elif section.section_type == 'features' %}
-    <section id="sec-{{ section.id }}" class="py-16 md:py-24 bg-amber-50">
+    <section id="sec-{{ section.id }}" data-section-id="{{ section.id }}" data-section-type="features" class="py-16 md:py-24 bg-amber-50">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center mb-12">
-          <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">{{ data.heading or 'Dlaczego my?' }}</h2>
+          <h2 data-editable="heading" class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">{{ data.heading or 'Dlaczego my?' }}</h2>
           <div class="w-16 h-1 bg-amber-500 mx-auto rounded"></div>
         </div>
         <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
@@ -214,11 +269,11 @@
           {% endfor %}
         </div>
       </div>
+      <span class="builder-section-label">Cechy</span>
     </section>
     {% endif %}
 
   {% else %}
-    <!-- Fallback gdy brak sekcji -->
     <section class="min-h-screen flex items-center justify-center bg-gray-50">
       <div class="text-center px-4">
         <i class="fas fa-hard-hat text-6xl text-amber-500 mb-4"></i>
@@ -230,7 +285,7 @@
   {% endfor %}
 
   <!-- Footer -->
-  <footer class="bg-gray-900 text-gray-400 py-8">
+  <footer class="bg-gray-900 text-gray-400 py-8" data-builder-ignore>
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-4">
       <p class="text-sm">&copy; {{ site.site_name if site else 'Firma Budowlana' }} – wszelkie prawa zastrzeżone.</p>
       <div class="flex gap-4">
@@ -241,12 +296,87 @@
   </footer>
 
   <script>
-    document.getElementById('mobileMenuBtn').addEventListener('click', () => {
+    // Mobile menu
+    document.getElementById('mobileMenuBtn')?.addEventListener('click', () => {
       document.getElementById('mobileMenu').classList.toggle('hidden');
     });
     document.querySelectorAll('#mobileMenu a').forEach(a => {
       a.addEventListener('click', () => document.getElementById('mobileMenu').classList.add('hidden'));
     });
+  </script>
+
+  <!-- Builder Bridge (only when in iframe) -->
+  <script>
+  (function() {
+    if (window.self === window.top) return; // Not in iframe
+
+    const sections = document.querySelectorAll('section[data-section-id]');
+    let activeId = null;
+
+    // Send message to parent
+    function send(type, payload) {
+      window.parent.postMessage({ type, payload }, '*');
+    }
+
+    // Hover effects
+    sections.forEach(sec => {
+      sec.addEventListener('mouseenter', () => {
+        send('sectionHover', { sectionId: parseInt(sec.dataset.sectionId) });
+      });
+      sec.addEventListener('mouseleave', () => {
+        send('sectionHover', { sectionId: null });
+      });
+      sec.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const id = parseInt(sec.dataset.sectionId);
+        activeId = id;
+        // Remove active from all
+        sections.forEach(s => s.classList.remove('builder-active'));
+        sec.classList.add('builder-active');
+        send('sectionClick', { sectionId: id });
+      });
+    });
+
+    // Listen for parent messages
+    window.addEventListener('message', (e) => {
+      const { type, payload } = e.data || {};
+
+      if (type === 'scrollTo') {
+        const sec = document.querySelector(`[data-section-id="${payload.sectionId}"]`);
+        if (sec) sec.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+
+      if (type === 'highlight') {
+        sections.forEach(s => s.classList.remove('builder-active'));
+        const sec = document.querySelector(`[data-section-id="${payload.sectionId}"]`);
+        if (sec) {
+          sec.classList.add('builder-active');
+          activeId = payload.sectionId;
+        }
+      }
+
+      if (type === 'updateSection') {
+        const sec = document.querySelector(`[data-section-id="${payload.sectionId}"]`);
+        if (!sec) return;
+        const el = sec.querySelector(`[data-editable="${payload.key}"]`);
+        if (el) {
+          if (payload.key === 'image' || payload.key === 'background_image') {
+            if (el.tagName === 'IMG') el.src = payload.value;
+            else if (el.tagName === 'SECTION') el.style.backgroundImage = `url('${payload.value}')`;
+          } else if (payload.key === 'overlay_color') {
+            const overlay = sec.querySelector('.absolute.inset-0');
+            if (overlay) overlay.style.backgroundColor = payload.value;
+          } else {
+            el.innerHTML = payload.value;
+          }
+        }
+      }
+    });
+
+    // Notify parent we're ready
+    send('ready', {});
+  })();
   </script>
 </body>
 </html>

@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kreator strony | BuildCMS</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="/static/css/admin/builder.css">
+</head>
+<body class="builder-root">
+
+  <!-- Toolbar -->
+  <header class="builder-toolbar">
+    <div class="builder-toolbar-left">
+      <a href="/admin" class="builder-logo">
+        <div class="builder-logo-icon">B</div>
+        <span>BuildCMS</span>
+      </a>
+      <div class="w-px h-6 bg-gray-700 mx-2"></div>
+      <span class="text-xs text-gray-500">Kreator strony</span>
+    </div>
+
+    <div class="builder-toolbar-center">
+      <button id="btnDevice" class="builder-btn builder-btn-icon" title="Przełącz widok">
+        <i class="fas fa-mobile-alt"></i>
+      </button>
+      <div class="w-px h-6 bg-gray-700 mx-1"></div>
+      <button id="btnUndo" class="builder-btn builder-btn-icon" title="Cofnij"><i class="fas fa-undo"></i></button>
+      <button id="btnRedo" class="builder-btn builder-btn-icon" title="Ponów"><i class="fas fa-redo"></i></button>
+    </div>
+
+    <div class="builder-toolbar-right">
+      <button onclick="window.open('/','_blank')" class="builder-btn builder-btn-icon" title="Podgląd na żywo">
+        <i class="fas fa-external-link-alt"></i>
+      </button>
+      <button id="btnPublish" class="builder-btn builder-btn-primary">
+        <i class="fas fa-cloud-upload-alt"></i> Opublikuj
+      </button>
+    </div>
+  </header>
+
+  <!-- Workspace -->
+  <div class="builder-workspace">
+
+    <!-- Left: Outline -->
+    <aside class="builder-sidebar">
+      <div class="builder-sidebar-header">
+        <h3>Struktura</h3>
+        <button id="btnAddSection" class="builder-btn builder-btn-icon text-amber-500 hover:text-amber-400">
+          <i class="fas fa-plus"></i>
+        </button>
+      </div>
+      <div class="builder-sidebar-body">
+        <div id="outlineTree"></div>
+      </div>
+      <div class="builder-sidebar-footer">
+        <button onclick="toggleSectionVisibility()" class="builder-btn w-full justify-center" title="Pokaż/ukryj">
+          <i class="fas fa-eye mr-2"></i> Widoczność
+        </button>
+        <button onclick="deleteActiveSection()" class="builder-btn builder-btn-danger w-full justify-center mt-2" title="Usuń">
+          <i class="fas fa-trash mr-2"></i> Usuń sekcję
+        </button>
+      </div>
+    </aside>
+
+    <!-- Center: Canvas -->
+    <main class="builder-canvas">
+      <div class="builder-canvas-inner">
+        <iframe id="previewFrame" src="/?builder=1" sandbox="allow-scripts allow-same-origin"></iframe>
+      </div>
+    </main>
+
+    <!-- Right: Properties -->
+    <aside class="builder-props">
+      <div class="builder-props-header">
+        <h3>Właściwości</h3>
+        <button id="btnSave" class="builder-btn builder-btn-primary text-xs py-1 px-3">
+          <i class="fas fa-save mr-1"></i> Zapisz
+        </button>
+      </div>
+      <div class="builder-props-body" id="propertyPanel"></div>
+      <div class="builder-props-footer text-xs text-gray-600 text-center">
+        Kliknij sekcję na podglądzie aby edytować
+      </div>
+    </aside>
+
+  </div>
+
+  <!-- Modal: Dodaj sekcję -->
+  <div id="addSectionModal" class="builder-modal-overlay hidden">
+    <div class="builder-modal">
+      <div class="builder-modal-header">
+        <h3>Dodaj sekcję</h3>
+        <button onclick="UI.modal('addSectionModal', false)" class="builder-btn builder-btn-icon text-gray-400">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="builder-modal-body">
+        <div class="grid grid-cols-2 gap-3">
+          {% set types = [
+            ('hero', 'Hero / Baner', 'fa-image', 'text-orange-500'),
+            ('about', 'O nas', 'fa-building', 'text-blue-500'),
+            ('services', 'Usługi', 'fa-tools', 'text-green-500'),
+            ('gallery', 'Galeria', 'fa-images', 'text-purple-500'),
+            ('contact', 'Kontakt', 'fa-envelope', 'text-red-500'),
+            ('cta', 'Call to Action', 'fa-bullhorn', 'text-amber-500'),
+            ('text', 'Tekst', 'fa-align-left', 'text-gray-400'),
+            ('features', 'Cechy', 'fa-star', 'text-teal-500')
+          ] %}
+          {% for value, label, icon, color in types %}
+          <button onclick="addSectionType('{{ value }}')" class="section-type-card">
+            <i class="fas {{ icon }} {{ color }}"></i>
+            <span>{{ label }}</span>
+          </button>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast container -->
+  <div id="toastContainer" class="fixed bottom-4 right-4 z-[200] space-y-2 pointer-events-none"></div>
+
+  <!-- Scripts -->
+  <script src="/static/js/admin/api-client.js"></script>
+  <script src="/static/js/admin/ui-utils.js"></script>
+  <script src="/static/js/admin/builder/iframe-bridge.js"></script>
+  <script src="/static/js/admin/builder/outline-tree.js"></script>
+  <script src="/static/js/admin/builder/property-panel.js"></script>
+  <script src="/static/js/admin/builder/builder-core.js"></script>
+</body>
+</html>

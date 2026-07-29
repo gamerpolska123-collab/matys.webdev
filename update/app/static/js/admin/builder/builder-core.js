@@ -1,10 +1,7 @@
 /**
- * BuilderCore v2.1b-fix – Inline Preview Builder
- * FIX: lepsza obsługa błędów, pusty stan, debugowanie
+ * BuilderCore v2.1b – Inline Preview Builder (no iframe)
  */
 document.addEventListener('DOMContentLoaded', () => {
-  console.log('[Builder] Inicjalizacja...');
-
   const state = {
     sections: [],
     activeId: null,
@@ -63,102 +60,47 @@ document.addEventListener('DOMContentLoaded', () => {
 
   async function loadSections() {
     try {
-      console.log('[Builder] Pobieranie sekcji z API...');
       const res = await api.get('/api/homepage/sections');
-      console.log('[Builder] Odpowiedź API:', res.status);
+      state.sections = await res.json();
 
-      if (!res.ok) {
-        const errText = await res.text();
-        console.error('[Builder] Błąd API:', res.status, errText);
-        UI.toast('Błąd API: ' + res.status, 'error');
-        showEmptyState();
-        return;
-      }
-
-      const data = await res.json();
-      console.log('[Builder] Pobrano sekcji:', data.length);
-
-      // Handle both array and object response
-      state.sections = Array.isArray(data) ? data : (data.sections || []);
-
-      if (state.sections.length === 0) {
-        console.log('[Builder] Brak sekcji – pokazuję pusty stan');
-        showEmptyState();
-      } else {
-        initBuilder();
-      }
-    } catch (e) {
-      console.error('[Builder] Błąd ładowania:', e);
-      UI.toast('Błąd ładowania: ' + e.message, 'error');
-      showEmptyState();
-    }
-  }
-
-  function showEmptyState() {
-    const canvas = document.getElementById('previewCanvas');
-    if (canvas) {
-      canvas.innerHTML = `
-        <div class="flex flex-col items-center justify-center h-96 text-slate-400">
-          <i class="fas fa-layer-group text-4xl mb-4 text-slate-600"></i>
-          <p class="text-sm mb-2">Brak sekcji na stronie</p>
-          <p class="text-xs text-slate-600 mb-4">Dodaj pierwszą sekcję aby zacząć</p>
-          <button onclick="UI.modal('addSectionModal', true)" class="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-slate-900 rounded-lg text-sm font-bold transition-colors">
-            <i class="fas fa-plus mr-2"></i>Dodaj sekcję
-          </button>
-        </div>
-      `;
-    }
-    // Still init outline tree (empty)
-    OutlineTree.init('#outlineTree', [], {
-      onSelect: (id) => selectSection(id),
-      onReorder: async (ids) => {
-        try {
-          await api.post('/api/homepage/sections/reorder', { order: ids });
-          UI.toast('Kolejność zapisana');
-        } catch (e) { UI.toast(e.message, 'error'); }
-      }
-    });
-  }
-
-  function initBuilder() {
-    console.log('[Builder] Inicjalizacja InlinePreview...');
-
-    InlinePreview.init('#previewCanvas', state.sections, {
-      onSelect: (id) => selectSection(id),
-      onEdit: (id) => selectSection(id),
-      onDelete: (id) => deleteSection(id),
-      onReorder: async (ids) => {
-        try {
-          await api.post('/api/homepage/sections/reorder', { order: ids });
-          UI.toast('Kolejność zapisana');
-        } catch (e) { UI.toast(e.message, 'error'); }
-      },
-      onFieldChange: (id, key, value) => {
-        const sec = state.sections.find(s => s.id === id);
-        if (sec) {
-          sec.content_json = sec.content_json || {};
-          sec.content_json[key] = value;
+      InlinePreview.init('#previewCanvas', state.sections, {
+        onSelect: (id) => selectSection(id),
+        onEdit: (id) => selectSection(id),
+        onDelete: (id) => deleteSection(id),
+        onReorder: async (ids) => {
+          try {
+            await api.post('/api/homepage/sections/reorder', { order: ids });
+            UI.toast('Kolejność zapisana');
+          } catch (e) { UI.toast(e.message, 'error'); }
+        },
+        onFieldChange: (id, key, value) => {
+          // Update local state
+          const sec = state.sections.find(s => s.id === id);
+          if (sec) {
+            sec.content_json = sec.content_json || {};
+            sec.content_json[key] = value;
+          }
+          // Sync property panel if this section is active
+          if (state.activeId === id) {
+            PropertyPanel.data[key] = value;
+          }
         }
-        if (state.activeId === id) {
-          PropertyPanel.data[key] = value;
-        }
-      }
-    });
+      });
 
-    OutlineTree.init('#outlineTree', state.sections, {
-      onSelect: (id) => {
-        InlinePreview.select(id);
-        selectSection(id);
-      },
-      onReorder: async (ids) => {
-        try {
-          await api.post('/api/homepage/sections/reorder', { order: ids });
-          UI.toast('Kolejność zapisana');
-          // Reorder local state
-          state.sections.sort((a, b) => ids.indexOf(a.id) - ids.indexOf(b.id));
-        } catch (e) { UI.toast(e.message, 'error'); }
-      }
-    });
+      OutlineTree.init('#outlineTree', state.sections, {
+        onSelect: (id) => {
+          InlinePreview.select(id);
+          selectSection(id);
+        },
+        onReorder: async (ids) => {
+          try {
+            await api.post('/api/homepage/sections/reorder', { order: ids });
+            UI.toast('Kolejność zapisana');
+            InlinePreview.refresh(state.sections.sort((a,b) => ids.indexOf(a.id) - ids.indexOf(b.id)));
+          } catch (e) { UI.toast(e.message, 'error'); }
+        }
+      });
+    } catch (e) { UI.toast(e.message, 'error'); }
   }
 
   function selectSection(id) {
@@ -178,6 +120,7 @@ document.addEventListener('DOMContentLoaded', () => {
     PropertyPanel.init('#propertyPanel', schema, section.content_json || {}, {
       onChange: (key, value) => {
         InlinePreview.updateSection(id, key, value);
+        // Update local state
         section.content_json = section.content_json || {};
         section.content_json[key] = value;
       }
@@ -197,16 +140,17 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (e) { UI.toast(e.message, 'error'); }
   });
 
-  // Publish
+  // Save all (publish)
   document.getElementById('btnPublish')?.addEventListener('click', async () => {
     try {
+      // Save all sections that have changes
       for (const sec of state.sections) {
         await api.put('/api/sections/' + sec.id, {
           title: sec.title,
           content_json: sec.content_json
         });
       }
-      await api.post('/api/homepage/toggle-publish');
+      const res = await api.post('/api/homepage/toggle-publish');
       UI.toast('Wszystko zapisane i opublikowane');
     } catch (e) { UI.toast(e.message, 'error'); }
   });
@@ -235,27 +179,18 @@ document.addEventListener('DOMContentLoaded', () => {
       });
       const newSection = await res.json();
       state.sections.push(newSection);
-
-      // If first section, re-init everything
-      if (state.sections.length === 1) {
-        initBuilder();
-      } else {
-        InlinePreview.addSection(newSection);
-        OutlineTree.init('#outlineTree', state.sections, {
-          onSelect: (id) => { InlinePreview.select(id); selectSection(id); },
-          onReorder: async (ids) => {
-            await api.post('/api/homepage/sections/reorder', { order: ids });
-            UI.toast('Kolejność zapisana');
-          }
-        });
-      }
+      InlinePreview.addSection(newSection);
+      OutlineTree.init('#outlineTree', state.sections, {
+        onSelect: (id) => { InlinePreview.select(id); selectSection(id); },
+        onReorder: async (ids) => {
+          await api.post('/api/homepage/sections/reorder', { order: ids });
+          UI.toast('Kolejność zapisana');
+        }
+      });
       UI.toast('Dodano sekcję');
       UI.modal('addSectionModal', false);
       selectSection(newSection.id);
-    } catch (e) {
-      console.error('[Builder] Błąd dodawania:', e);
-      UI.toast(e.message, 'error');
-    }
+    } catch (e) { UI.toast(e.message, 'error'); }
   };
 
   async function deleteSection(id) {
@@ -264,19 +199,13 @@ document.addEventListener('DOMContentLoaded', () => {
       await api.del('/api/sections/' + id);
       InlinePreview.removeSection(id);
       state.sections = state.sections.filter(s => s.id !== id);
-
-      if (state.sections.length === 0) {
-        showEmptyState();
-      } else {
-        OutlineTree.init('#outlineTree', state.sections, {
-          onSelect: (id) => { InlinePreview.select(id); selectSection(id); },
-          onReorder: async (ids) => {
-            await api.post('/api/homepage/sections/reorder', { order: ids });
-            UI.toast('Kolejność zapisana');
-          }
-        });
-      }
-
+      OutlineTree.init('#outlineTree', state.sections, {
+        onSelect: (id) => { InlinePreview.select(id); selectSection(id); },
+        onReorder: async (ids) => {
+          await api.post('/api/homepage/sections/reorder', { order: ids });
+          UI.toast('Kolejność zapisana');
+        }
+      });
       if (state.activeId === id) {
         state.activeId = null;
         PropertyPanel.clear();
@@ -300,6 +229,6 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (e) { UI.toast(e.message, 'error'); }
   };
 
-  // Start
+  // Init
   loadSections();
 });
