@@ -1,0 +1,36 @@
+/* === Admin Responsive Fixes === */
+@media (max-width: 768px) {
+  .admin-sidebar {
+    position: fixed;
+    left: -100%;
+    top: 0;
+    height: 100vh;
+    width: 260px;
+    z-index: 50;
+    transition: left 0.3s ease;
+  }
+  .admin-sidebar.open {
+    left: 0;
+  }
+  .admin-main {
+    margin-left: 0 !important;
+    padding: 1rem;
+  }
+  .admin-navbar {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+  .builder-sidebar {
+    width: 100% !important;
+    border-right: none;
+    border-bottom: 1px solid #e5e7eb;
+  }
+  .preview-frame {
+    height: 60vh;
+  }
+}
+@media (min-width: 769px) {
+  .admin-sidebar {
+    left: 0 !important;
+  }
+}
