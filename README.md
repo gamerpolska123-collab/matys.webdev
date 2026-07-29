@@ -1,6 +1,5 @@
 # 🏗️ BuildCMS – Notatki Deweloperskie (AI Internal)
 
-> PLIK TYLKO DLA MNIE (AI). Kontekst projektu, proces pracy, roadmapa.
 
 ---
 
