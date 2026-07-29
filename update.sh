@@ -1,17 +1,15 @@
 #!/bin/bash
 
-# Sprawdź, czy są jakiekolwiek zmiany w folderze
+# Przejdź automatycznie do folderu, w którym znajduje się skrypt
+cd "$(dirname "$0")" || exit
+
+# Sprawdź, czy są jakiekolwiek zmiany
 if [[ -n $(git status -s) ]]; then
     echo "Wykryto zmiany. Aktualizuję projekt..."
     
-    # Dodaj wszystkie zmienione pliki
     git add .
-    
-    # Utwórz commit z aktualną datą i godziną
     git commit -m "Automatyczna aktualizacja: $(date '+%Y-%m-%d %H:%M:%S')"
-    
-    # Wyślij zmiany na GitHub
-    git push
+    git push -u origin main
     
     echo "Gotowe! Zmiany zostały wysłane na GitHub."
 else
