@@ -5,7 +5,7 @@ from fastapi import APIRouter
 from app.config import get_settings
 
 class ModuleInfo:
-    def __init__(self, name: str, router: APIRouter = None, models: Any = None, 
+    def __init__(self, name: str, router: APIRouter = None, models: Any = None,
                  menu_items: List[dict] = None, templates_dir: str = None):
         self.name = name
         self.router = router
@@ -20,7 +20,6 @@ class ModuleManager:
         self.settings = get_settings()
 
     def discover_modules(self):
-        """Autodiscovery modułów z katalogu modules/"""
         try:
             import modules
             for importer, modname, ispkg in pkgutil.iter_modules(modules.__path__):
@@ -29,28 +28,15 @@ class ModuleManager:
                 try:
                     module = importlib.import_module(f"modules.{modname}")
                     info = ModuleInfo(name=modname)
-
-                    # Sprawdź czy moduł ma router
                     if hasattr(module, "router"):
                         info.router = module.router
-
-                    # Sprawdź czy ma modele
                     if hasattr(module, "models"):
                         info.models = module.models
-
-                    # Sprawdź czy ma pozycje menu
                     if hasattr(module, "admin_menu"):
                         info.menu_items = module.admin_menu
-
-                    # Sprawdź czy ma katalog templatek
-                    tpl_dir = f"modules/{modname}/templates"
-                    if (module.__file__ and 
-                        (module.__file__.rsplit("/", 1)[0] + "/templates")):
-                        info.templates_dir = tpl_dir
-
                     self.modules[modname] = info
                 except Exception as e:
-                    print(f"Błąd ładowania modułu {modname}: {e}")
+                    print(f"[MODULE ERROR] {modname}: {e}")
         except ImportError:
             pass
 
@@ -63,7 +49,7 @@ class ModuleManager:
         for mod in self.get_enabled_modules():
             for item in mod.menu_items:
                 menu.append({**item, "module": mod.name})
-        return menu
+        return sorted(menu, key=lambda x: x.get("position", 99))
 
     def register_routers(self, app):
         for mod in self.get_enabled_modules():

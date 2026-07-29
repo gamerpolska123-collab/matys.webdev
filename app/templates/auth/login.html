@@ -9,9 +9,7 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
         body { font-family: 'Inter', sans-serif; }
-        .login-bg {
-            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-        }
+        .login-bg { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); }
     </style>
 </head>
 <body class="login-bg min-h-screen flex items-center justify-center p-4">
@@ -21,22 +19,20 @@
                 <i class="fas fa-hard-hat text-white text-2xl"></i>
             </div>
             <h1 class="text-2xl font-bold text-gray-800">BuildCMS</h1>
-            <p class="text-gray-500 text-sm mt-1">Panel administracyjny</p>
+            <p class="text-gray-500 text-sm mt-1">Panel administracyjny v1.0.1</p>
         </div>
-
         {% if error %}
         <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6 text-sm flex items-center gap-2">
             <i class="fas fa-exclamation-circle"></i> {{ error }}
         </div>
         {% endif %}
-
         <form method="POST" action="/login" class="space-y-5">
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
                 <div class="relative">
                     <i class="fas fa-envelope absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
                     <input type="email" name="email" required 
-                        class="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                        class="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
                         placeholder="admin@firma.pl" value="admin@firma.pl">
                 </div>
             </div>
@@ -45,7 +41,7 @@
                 <div class="relative">
                     <i class="fas fa-lock absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
                     <input type="password" name="password" required 
-                        class="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                        class="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
                         placeholder="••••••••">
                 </div>
             </div>
@@ -54,10 +50,9 @@
                 Zaloguj się
             </button>
         </form>
-
         <div class="mt-6 text-center text-xs text-gray-400">
             <p>Dane domyślne: admin@firma.pl / admin123</p>
-            <p class="mt-1">Zmień w zmiennych środowiskowych przed produkcją</p>
+            <p class="mt-1">Zmień w pliku .env przed produkcją</p>
         </div>
     </div>
 </body>

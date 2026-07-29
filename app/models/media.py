@@ -4,7 +4,6 @@ from app.models.base import TimestampMixin
 
 class MediaFile(Base, TimestampMixin):
     __tablename__ = "media_files"
-
     filename = Column(String(255), nullable=False)
     original_name = Column(String(255), nullable=False)
     file_path = Column(String(500), nullable=False)

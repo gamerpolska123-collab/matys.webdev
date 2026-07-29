@@ -5,8 +5,6 @@ from app.config import get_settings
 import os
 
 settings = get_settings()
-
-# Upewnij się że katalog istnieje
 os.makedirs(os.path.dirname(settings.DATABASE_URL.replace("sqlite:///", "")), exist_ok=True)
 
 engine = create_engine(
@@ -16,7 +14,6 @@ engine = create_engine(
     echo=False
 )
 
-# Włącz foreign keys dla SQLite
 @event.listens_for(engine, "connect")
 def set_sqlite_pragma(dbapi_conn, connection_record):
     cursor = dbapi_conn.cursor()

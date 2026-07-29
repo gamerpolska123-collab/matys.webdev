@@ -8,7 +8,6 @@ from app.models import Page, PageSection, SiteSettings
 router = APIRouter()
 templates = Jinja2Templates(directory="modules/onepage/templates")
 
-# Menu dla admin panelu
 admin_menu = [
     {"title": "OnePage", "icon": "layout", "url": "/mod/onepage/", "position": 10}
 ]
@@ -19,17 +18,11 @@ async def onepage_home(request: Request, db: Session = Depends(get_db)):
     page = db.query(Page).filter(Page.is_homepage == True, Page.module == "onepage").first()
     if not page:
         page = db.query(Page).filter(Page.module == "onepage", Page.is_published == True).first()
-
     sections = []
     if page:
         sections = db.query(PageSection).filter(
-            PageSection.page_id == page.id,
-            PageSection.is_visible == True
+            PageSection.page_id == page.id, PageSection.is_visible == True
         ).order_by(PageSection.sort_order).all()
-
     return templates.TemplateResponse("index.html", {
-        "request": request,
-        "site": site,
-        "page": page,
-        "sections": sections
+        "request": request, "site": site, "page": page, "sections": sections
     })

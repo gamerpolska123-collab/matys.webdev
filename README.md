@@ -1,96 +1,120 @@
-# Construction CMS
+# Construction CMS v1.0.1
 
-Debung Profesjonalny system CMS dla firm budowlanych.
+Profesjonalny system CMS dla firm budowlanych.
 Zoptymalizowany pod Raspberry Pi + Docker.
+
+## Struktura projektu (podział na kod i dane)
+
+```
+construction-cms/
+├── app/                    ← KOD APLIKACJI (nadpisywany przy aktualizacji)
+│   ├── main.py
+│   ├── routers/
+│   ├── models/
+│   ├── templates/
+│   └── static/
+├── modules/                ← MODUŁY (nadpisywane przy aktualizacji)
+│   ├── onepage/
+│   ├── blog/
+│   └── shop/
+├── migrations/             ← MIGRACJE BAZY (nadpisywane)
+├── scripts/                ← SKRYPTY POMOCNICZE
+│   ├── update.sh           ← GŁÓWNY SKRYPT AKTUALIZACJI
+│   └── backup.sh           ← Ręczny backup
+├── data/                   ← BAZA SQLITE (PERSISTENT - NIE nadpisuj!)
+├── uploads/                ← PLIKI UŻYTKOWNIKA (PERSISTENT - NIE nadpisuj!)
+├── backups/                ← Automatyczne kopie zapasowe
+├── .env                    ← KONFIGURACJA (PERSISTENT)
+├── docker-compose.yml      ← Docker Compose
+├── Dockerfile
+├── nginx.conf
+└── requirements.txt
+```
 
 ## Szybki start
 
-```bash
-cd docker
-docker-compose up --build
-```
-
-Aplikacja działa na porcie **85** (aby nie kolidować z istniejącym serwerem HTTP/HTTPS na portach 80/443).
-
-- Panel admina: http://twoj-serwer:85/admin
-- Strona: http://twoj-serwer:85/
-- API docs: http://twoj-serwer:85/docs
-- Domyślne dane logowania: `admin@firma.pl` / `admin123`
-
-## Stack technologiczny
-
-- **Backend**: FastAPI + SQLAlchemy 2.0
-- **Baza**: SQLite (plik `data/cms.db`)
-- **Frontend admin**: Jinja2 + HTMX + Tailwind CSS
-- **Auth**: JWT + bcrypt
-- **Docker**: Alpine Linux (ARM-ready)
-- **Proxy**: Nginx (port zewnętrzny 85, wewnętrzny 80)
-
-## Architektura modułów
-
-Moduły w katalogu `modules/`:
-- `onepage` – strona wizytówka (gotowe)
-- `blog` – placeholder
-- `shop` – placeholder
-
-Każdy moduł eksportuje `router` i opcjonalnie `admin_menu`.
-
-## Wdrożenie na serwerze z istniejącym HTTP
-
-Skoro masz już serwer na portach 80/443, nasz stack używa portu **85**:
+### 1. Pierwsze uruchomienie
 
 ```bash
-# Przenieś pliki na serwer
-scp construction-cms.zip user@serwer:/home/user/
+# Skopiuj szablon konfiguracji
+cp .env.example .env
 
-# Rozpakuj i uruchom
-unzip construction-cms.zip
-cd construction-cms/docker
-docker-compose up -d
-
-# Sprawdź czy działa
-curl http://localhost:85/health
-```
-
-Jeśli chcesz dodać domenę (np. `cms.twojadomena.pl`) do istniejącego serwera Apache/Nginx na porcie 80/443, skonfiguruj reverse proxy:
-
-### Przykład dla Apache:
-```apache
-<VirtualHost *:80>
-    ServerName cms.twojadomena.pl
-    ProxyPreserveHost On
-    ProxyPass / http://localhost:85/
-    ProxyPassReverse / http://localhost:85/
-</VirtualHost>
-```
-
-### Przykład dla Nginx (główny):
-```nginx
-server {
-    listen 80;
-    server_name cms.twojadomena.pl;
-    location / {
-        proxy_pass http://localhost:85;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-    }
-}
-```
-
-## Zmiana hasła / SECRET_KEY
-
-Przed produkcją edytuj plik `.env` w głównym katalogu:
-```bash
+# Edytuj .env (zmień SECRET_KEY i hasło admina!)
 nano .env
+
+# Uruchom
+docker compose up --build -d
+
+# Sprawdź
+curl http://localhost:85/health
+curl http://localhost:85/api/version
 ```
 
-Zmień przynajmniej:
-- `SECRET_KEY` – losowy ciąg min. 32 znaki
-- `ADMIN_PASSWORD` – silne hasło
+### 2. Panel administracyjny
 
-Następnie zrestartuj:
+- **URL:** `http://twoj-serwer:85/admin`
+- **Login:** `admin@firma.pl`
+- **Hasło:** (z pliku `.env`, domyślnie `admin123`)
+
+### 3. Aktualizacja (bez utraty danych!)
+
 ```bash
-cd docker
-docker-compose down
-docker-compose up -d
+# Sposób 1: Skrypt automatyczny (zalecany)
+./scripts/update.sh
+
+# Sposób 2: Ręcznie
+docker compose down
+# Podmień pliki w app/ i modules/
+docker compose up --build -d
 ```
+
+**Co jest bezpieczne (nie ginie przy aktualizacji):**
+- `data/cms.db` – baza danych
+- `uploads/` – wgrane pliki
+- `.env` – konfiguracja
+- `backups/` – kopie zapasowe
+
+**Co się aktualizuje:**
+- `app/` – kod backendu
+- `modules/` – moduły
+- `requirements.txt` – zależności
+- `Dockerfile` – obraz
+
+## Porty
+
+| Usługa | Port wewnętrzny | Port zewnętrzny |
+|--------|-----------------|-----------------|
+| App    | 8000            | tylko Docker    |
+| Nginx  | 80              | 85 (konfiguracja w `.env`) |
+
+## Moduły
+
+| Moduł  | Status      | Opis                  |
+|--------|-------------|----------------------|
+| OnePage| ✅ Gotowe   | Strona wizytówka      |
+| Blog   | ⏳ Placeholder | W przygotowaniu    |
+| Sklep  | ⏳ Placeholder | W przygotowaniu    |
+
+## Bezpieczeństwo (PRZED produkcją!)
+
+Zmień w `.env`:
+```bash
+SECRET_KEY=twoj-losowy-klucz-min-50-znakow
+ADMIN_PASSWORD=silne-haslo-min-12-znakow
+```
+
+## API
+
+- **Health:** `GET /health`
+- **Wersja:** `GET /api/version`
+- **Docs:** `http://twoj-serwer:85/docs`
+
+## Backup ręczny
+
+```bash
+./scripts/backup.sh
+```
+
+Tworzy kopie w `backups/`:
+- `cms.db.YYYYMMDD_HHMMSS.bak`
+- `uploads.YYYYMMDD_HHMMSS.tar.gz`

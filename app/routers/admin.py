@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Request, Form, HTTPException
+from fastapi import APIRouter, Depends, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
@@ -23,7 +23,8 @@ def get_admin_user(request: Request, db: Session = Depends(get_db)):
         raise HTTPException(status_code=401, detail="Unauthorized")
     return user
 
-# === DASHBOARD ===
+from fastapi import HTTPException
+
 @router.get("/admin", response_class=HTMLResponse)
 async def admin_dashboard(request: Request, db: Session = Depends(get_db), user: User = Depends(get_admin_user)):
     stats = {
@@ -34,11 +35,10 @@ async def admin_dashboard(request: Request, db: Session = Depends(get_db), user:
     }
     recent_pages = db.query(Page).order_by(Page.updated_at.desc()).limit(5).all()
     return templates.TemplateResponse("admin/dashboard.html", {
-        "request": request, "user": user, "stats": stats, 
+        "request": request, "user": user, "stats": stats,
         "recent_pages": recent_pages, "menu": module_manager.get_admin_menu()
     })
 
-# === PAGES CRUD ===
 @router.get("/admin/pages", response_class=HTMLResponse)
 async def admin_pages(request: Request, db: Session = Depends(get_db), user: User = Depends(get_admin_user)):
     pages = db.query(Page).order_by(Page.sort_order).all()
@@ -55,38 +55,30 @@ async def admin_page_new(request: Request, user: User = Depends(get_admin_user))
 @router.get("/admin/pages/{page_id}/edit", response_class=HTMLResponse)
 async def admin_page_edit(request: Request, page_id: int, db: Session = Depends(get_db), user: User = Depends(get_admin_user)):
     page = db.query(Page).filter(Page.id == page_id).first()
-    if not page:
-        return RedirectResponse("/admin/pages", status_code=302)
+    if not page: return RedirectResponse("/admin/pages", status_code=302)
     return templates.TemplateResponse("admin/pages/edit.html", {
         "request": request, "user": user, "page": page, "menu": module_manager.get_admin_menu()
     })
 
-# === SECTIONS ===
 @router.get("/admin/pages/{page_id}/sections", response_class=HTMLResponse)
 async def admin_sections(request: Request, page_id: int, db: Session = Depends(get_db), user: User = Depends(get_admin_user)):
     page = db.query(Page).filter(Page.id == page_id).first()
-    if not page:
-        return RedirectResponse("/admin/pages", status_code=302)
+    if not page: return RedirectResponse("/admin/pages", status_code=302)
     sections = db.query(PageSection).filter(PageSection.page_id == page_id).order_by(PageSection.sort_order).all()
     return templates.TemplateResponse("admin/pages/sections.html", {
         "request": request, "user": user, "page": page, "sections": sections,
         "menu": module_manager.get_admin_menu()
     })
 
-# === SETTINGS ===
 @router.get("/admin/settings", response_class=HTMLResponse)
 async def admin_settings(request: Request, db: Session = Depends(get_db), user: User = Depends(get_admin_user)):
     settings = db.query(SiteSettings).first()
     if not settings:
-        settings = SiteSettings()
-        db.add(settings)
-        db.commit()
-        db.refresh(settings)
+        settings = SiteSettings(); db.add(settings); db.commit(); db.refresh(settings)
     return templates.TemplateResponse("admin/settings.html", {
         "request": request, "user": user, "settings": settings, "menu": module_manager.get_admin_menu()
     })
 
-# === MEDIA ===
 @router.get("/admin/media", response_class=HTMLResponse)
 async def admin_media(request: Request, db: Session = Depends(get_db), user: User = Depends(get_admin_user)):
     files = db.query(MediaFile).order_by(MediaFile.created_at.desc()).all()

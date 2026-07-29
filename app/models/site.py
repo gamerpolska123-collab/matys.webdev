@@ -3,7 +3,6 @@ from app.database import Base
 
 class SiteSettings(Base):
     __tablename__ = "site_settings"
-
     id = Column(Integer, primary_key=True)
     site_name = Column(String(255), default="Firma Budowlana")
     site_tagline = Column(String(500), default="Profesjonalne usługi budowlane")
