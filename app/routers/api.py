@@ -23,6 +23,7 @@ def get_current_user(request: Request, db: Session = Depends(get_db)):
         raise HTTPException(status_code=401, detail="User not found")
     return user
 
+# === SITE SETTINGS ===
 class SiteSettingsUpdate(BaseModel):
     site_name: Optional[str] = None
     site_tagline: Optional[str] = None
@@ -30,6 +31,10 @@ class SiteSettingsUpdate(BaseModel):
     contact_phone: Optional[str] = None
     contact_address: Optional[str] = None
     seo_keywords: Optional[str] = None
+    logo_url: Optional[str] = None
+    favicon_url: Optional[str] = None
+    facebook_url: Optional[str] = None
+    instagram_url: Optional[str] = None
 
 @router.get("/settings")
 async def get_settings_api(db: Session = Depends(get_db)):
@@ -48,47 +53,7 @@ async def update_settings(data: SiteSettingsUpdate, db: Session = Depends(get_db
     db.commit(); db.refresh(s)
     return s
 
-class PageCreate(BaseModel):
-    title: str
-    slug: str
-    meta_description: Optional[str] = ""
-    is_published: bool = False
-    is_homepage: bool = False
-    template: str = "default"
-    module: str = "onepage"
-
-@router.get("/pages")
-async def list_pages(db: Session = Depends(get_db)):
-    return db.query(Page).order_by(Page.sort_order).all()
-
-@router.post("/pages")
-async def create_page(data: PageCreate, db: Session = Depends(get_db)):
-    if db.query(Page).filter(Page.slug == data.slug).first():
-        raise HTTPException(status_code=400, detail="Slug already exists")
-    page = Page(**data.dict()); db.add(page); db.commit(); db.refresh(page)
-    return page
-
-@router.get("/pages/{page_id}")
-async def get_page(page_id: int, db: Session = Depends(get_db)):
-    page = db.query(Page).filter(Page.id == page_id).first()
-    if not page: raise HTTPException(status_code=404, detail="Page not found")
-    return page
-
-@router.put("/pages/{page_id}")
-async def update_page(page_id: int, data: PageCreate, db: Session = Depends(get_db)):
-    page = db.query(Page).filter(Page.id == page_id).first()
-    if not page: raise HTTPException(status_code=404, detail="Page not found")
-    for field, value in data.dict().items(): setattr(page, field, value)
-    db.commit(); db.refresh(page)
-    return page
-
-@router.delete("/pages/{page_id}")
-async def delete_page(page_id: int, db: Session = Depends(get_db)):
-    page = db.query(Page).filter(Page.id == page_id).first()
-    if not page: raise HTTPException(status_code=404, detail="Page not found")
-    db.delete(page); db.commit()
-    return {"ok": True}
-
+# === HOMEPAGE SECTIONS ===
 class SectionCreate(BaseModel):
     title: Optional[str] = ""
     section_type: str = "text"
@@ -98,30 +63,69 @@ class SectionCreate(BaseModel):
     is_visible: Optional[bool] = True
     background_image: Optional[str] = ""
 
-@router.get("/pages/{page_id}/sections")
-async def list_sections(page_id: int, db: Session = Depends(get_db)):
-    return db.query(PageSection).filter(PageSection.page_id == page_id).order_by(PageSection.sort_order).all()
+@router.get("/homepage/sections")
+async def list_homepage_sections(db: Session = Depends(get_db)):
+    page = db.query(Page).filter(Page.is_homepage == True).first()
+    if not page:
+        return []
+    return db.query(PageSection).filter(PageSection.page_id == page.id).order_by(PageSection.sort_order).all()
 
-@router.post("/pages/{page_id}/sections")
-async def create_section(page_id: int, data: SectionCreate, db: Session = Depends(get_db)):
-    section = PageSection(page_id=page_id, **data.dict()); db.add(section); db.commit(); db.refresh(section)
+@router.post("/homepage/sections")
+async def create_homepage_section(data: SectionCreate, db: Session = Depends(get_db)):
+    page = db.query(Page).filter(Page.is_homepage == True).first()
+    if not page:
+        page = Page(title="Strona główna", slug="", is_homepage=True, is_published=True, module="onepage")
+        db.add(page); db.commit(); db.refresh(page)
+    section = PageSection(page_id=page.id, **data.dict())
+    db.add(section); db.commit(); db.refresh(section)
     return section
 
-@router.put("/sections/{section_id}")
-async def update_section(section_id: int, data: SectionCreate, db: Session = Depends(get_db)):
+@router.put("/homepage/sections/{section_id}")
+async def update_homepage_section(section_id: int, data: SectionCreate, db: Session = Depends(get_db)):
     section = db.query(PageSection).filter(PageSection.id == section_id).first()
     if not section: raise HTTPException(status_code=404, detail="Section not found")
     for field, value in data.dict(exclude_unset=True).items(): setattr(section, field, value)
     db.commit(); db.refresh(section)
     return section
 
-@router.delete("/sections/{section_id}")
-async def delete_section(section_id: int, db: Session = Depends(get_db)):
+@router.delete("/homepage/sections/{section_id}")
+async def delete_homepage_section(section_id: int, db: Session = Depends(get_db)):
     section = db.query(PageSection).filter(PageSection.id == section_id).first()
     if not section: raise HTTPException(status_code=404, detail="Section not found")
     db.delete(section); db.commit()
     return {"ok": True}
 
+@router.post("/homepage/sections/{section_id}/sort")
+async def sort_section(section_id: int, direction: str, db: Session = Depends(get_db)):
+    """direction: 'up' lub 'down'"""
+    section = db.query(PageSection).filter(PageSection.id == section_id).first()
+    if not section: raise HTTPException(status_code=404, detail="Section not found")
+
+    if direction == "up":
+        other = db.query(PageSection).filter(
+            PageSection.page_id == section.page_id,
+            PageSection.sort_order < section.sort_order
+        ).order_by(PageSection.sort_order.desc()).first()
+    else:
+        other = db.query(PageSection).filter(
+            PageSection.page_id == section.page_id,
+            PageSection.sort_order > section.sort_order
+        ).order_by(PageSection.sort_order.asc()).first()
+
+    if other:
+        section.sort_order, other.sort_order = other.sort_order, section.sort_order
+        db.commit()
+    return {"ok": True}
+
+@router.post("/homepage/toggle-publish")
+async def toggle_publish(db: Session = Depends(get_db)):
+    page = db.query(Page).filter(Page.is_homepage == True).first()
+    if not page: raise HTTPException(status_code=404, detail="Homepage not found")
+    page.is_published = not page.is_published
+    db.commit(); db.refresh(page)
+    return {"published": page.is_published}
+
+# === MEDIA ===
 @router.post("/upload")
 async def upload_file(file: UploadFile = File(...), db: Session = Depends(get_db)):
     os.makedirs(settings.UPLOAD_DIR, exist_ok=True)

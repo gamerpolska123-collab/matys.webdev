@@ -1,0 +1,178 @@
+{% extends "base.html" %}
+{% block title %}Sekcje strony{% endblock %}
+{% block header %}Sekcje strony głównej{% endblock %}
+{% block content %}
+<div class="mb-6 flex items-center justify-between">
+    <p class="text-gray-500">Dodawaj, edytuj i ukrywaj sekcje swojej strony. Użyj strzałek aby zmienić kolejność.</p>
+    <button onclick="openModal()" class="bg-primary hover:bg-amber-700 text-white px-4 py-2 rounded-lg font-medium text-sm transition-colors flex items-center gap-2">
+        <i class="fas fa-plus"></i> Dodaj sekcję
+    </button>
+</div>
+
+<div class="space-y-3" id="sectionsList">
+    {% for section in sections %}
+    <div class="bg-white rounded-xl shadow-sm border p-5 relative group" data-id="{{ section.id }}">
+        <div class="flex items-center gap-4">
+            <div class="flex flex-col gap-1">
+                <button onclick="moveSection({{ section.id }}, 'up')" class="w-8 h-8 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-600 flex items-center justify-center" title="W górę"><i class="fas fa-chevron-up text-xs"></i></button>
+                <button onclick="moveSection({{ section.id }}, 'down')" class="w-8 h-8 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-600 flex items-center justify-center" title="W dół"><i class="fas fa-chevron-down text-xs"></i></button>
+            </div>
+            <div class="w-10 h-10 rounded-lg flex items-center justify-center text-sm font-bold
+                {% if section.section_type == 'hero' %}bg-red-100 text-red-600
+                {% elif section.section_type == 'about' %}bg-blue-100 text-blue-600
+                {% elif section.section_type == 'services' %}bg-green-100 text-green-600
+                {% elif section.section_type == 'gallery' %}bg-purple-100 text-purple-600
+                {% elif section.section_type == 'contact' %}bg-orange-100 text-orange-600
+                {% elif section.section_type == 'cta' %}bg-pink-100 text-pink-600
+                {% else %}bg-gray-100 text-gray-600{% endif %}">
+                {{ loop.index }}
+            </div>
+            <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2">
+                    <h4 class="font-semibold text-gray-800">{{ section.title or 'Bez tytułu' }}</h4>
+                    <span class="px-2 py-0.5 bg-gray-100 text-gray-500 text-xs rounded capitalize">{{ section.section_type }}</span>
+                    {% if not section.is_visible %}<span class="px-2 py-0.5 bg-gray-200 text-gray-500 text-xs rounded">Ukryta</span>{% endif %}
+                </div>
+                <p class="text-sm text-gray-500 truncate mt-0.5">
+                    {% if section.content %}{{ section.content[:80] }}{% if section.content|length > 80 %}...{% endif %}{% else %}<span class="italic">Brak treści</span>{% endif %}
+                </p>
+            </div>
+            <div class="flex items-center gap-2">
+                <button onclick="toggleVisibility({{ section.id }}, {{ 'false' if section.is_visible else 'true' }})" 
+                    class="w-9 h-9 rounded-lg flex items-center justify-center transition-colors
+                    {% if section.is_visible %}bg-green-50 text-green-600 hover:bg-green-100{% else %}bg-gray-100 text-gray-400 hover:bg-gray-200{% endif %}"
+                    title="{% if section.is_visible %}Ukryj{% else %}Pokaż{% endif %}">
+                    <i class="fas {% if section.is_visible %}fa-eye{% else %}fa-eye-slash{% endif %} text-sm"></i>
+                </button>
+                <button onclick="editSection({{ section.id }})" class="w-9 h-9 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-600 flex items-center justify-center transition-colors" title="Edytuj"><i class="fas fa-pencil-alt text-sm"></i></button>
+                <button onclick="deleteSection({{ section.id }})" class="w-9 h-9 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 flex items-center justify-center transition-colors" title="Usuń"><i class="fas fa-trash text-sm"></i></button>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="bg-white rounded-xl shadow-sm border p-12 text-center text-gray-500">
+        <i class="fas fa-layer-group text-4xl mb-3 text-gray-300"></i>
+        <p class="mb-2">Brak sekcji na stronie głównej.</p>
+        <button onclick="openModal()" class="text-primary hover:underline font-medium">Dodaj pierwszą sekcję</button>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Modal -->
+<div id="sectionModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+        <div class="p-6 border-b flex items-center justify-between">
+            <h3 class="font-bold text-lg" id="modalTitle">Nowa sekcja</h3>
+            <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times text-xl"></i></button>
+        </div>
+        <form id="sectionForm" class="p-6 space-y-5">
+            <input type="hidden" id="sectionId">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Tytuł sekcji</label>
+                <input type="text" id="secTitle" class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary outline-none" placeholder="np. O naszej firmie">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Typ sekcji</label>
+                <select id="secType" class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary outline-none bg-white">
+                    <option value="hero">Hero (baner główny)</option>
+                    <option value="about">O nas</option>
+                    <option value="services">Usługi</option>
+                    <option value="gallery">Galeria</option>
+                    <option value="contact">Kontakt</option>
+                    <option value="cta">Call to Action</option>
+                    <option value="text">Tekst</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Treść (HTML dozwolony)</label>
+                <textarea id="secContent" rows="8" class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary outline-none font-mono text-sm" placeholder="<p>Twoja treść...</p>"></textarea>
+                <p class="text-xs text-gray-400 mt-1">Możesz używać HTML. Obrazki wklejaj przez Media, a tutaj wstawiaj ścieżkę.</p>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Obraz tła (opcjonalnie)</label>
+                <input type="text" id="secBg" class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary outline-none" placeholder="/uploads/nazwa-pliku.jpg">
+            </div>
+            <div class="flex items-center gap-2">
+                <input type="checkbox" id="secVisible" checked class="w-4 h-4 text-primary rounded">
+                <label class="text-sm text-gray-700">Widoczna od razu</label>
+            </div>
+            <div class="flex items-center gap-3 pt-4 border-t">
+                <button type="submit" class="bg-primary hover:bg-amber-700 text-white px-6 py-2 rounded-lg font-medium">Zapisz</button>
+                <button type="button" onclick="closeModal()" class="px-6 py-2 text-gray-600 hover:text-gray-800 font-medium">Anuluj</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+let editingId = null;
+
+function openModal(id = null) {
+    editingId = id;
+    document.getElementById('modalTitle').textContent = id ? 'Edytuj sekcję' : 'Nowa sekcja';
+    document.getElementById('sectionModal').classList.remove('hidden');
+    document.getElementById('sectionModal').classList.add('flex');
+    if (!id) document.getElementById('sectionForm').reset();
+}
+
+function closeModal() {
+    document.getElementById('sectionModal').classList.add('hidden');
+    document.getElementById('sectionModal').classList.remove('flex');
+    editingId = null;
+}
+
+async function editSection(id) {
+    const res = await fetch('/api/homepage/sections');
+    const sections = await res.json();
+    const sec = sections.find(s => s.id === id);
+    if (sec) {
+        document.getElementById('secTitle').value = sec.title || '';
+        document.getElementById('secType').value = sec.section_type;
+        document.getElementById('secContent').value = sec.content || '';
+        document.getElementById('secBg').value = sec.background_image || '';
+        document.getElementById('secVisible').checked = sec.is_visible;
+        openModal(id);
+    }
+}
+
+async function toggleVisibility(id, makeVisible) {
+    const res = await fetch(`/api/homepage/sections/${id}`, {
+        method: 'PUT',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ is_visible: makeVisible })
+    });
+    if (res.ok) location.reload();
+}
+
+async function moveSection(id, direction) {
+    const res = await fetch(`/api/homepage/sections/${id}/sort`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ direction: direction })
+    });
+    if (res.ok) location.reload();
+}
+
+document.getElementById('sectionForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const data = {
+        title: document.getElementById('secTitle').value,
+        section_type: document.getElementById('secType').value,
+        content: document.getElementById('secContent').value,
+        background_image: document.getElementById('secBg').value,
+        is_visible: document.getElementById('secVisible').checked
+    };
+    const url = editingId ? `/api/homepage/sections/${editingId}` : '/api/homepage/sections';
+    const method = editingId ? 'PUT' : 'POST';
+    const res = await fetch(url, { method: method, headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data) });
+    if (res.ok) location.reload();
+    else alert('Błąd zapisu');
+});
+
+async function deleteSection(id) {
+    if (!confirm('Usunąć tę sekcję?')) return;
+    const res = await fetch(`/api/homepage/sections/${id}`, { method: 'DELETE' });
+    if (res.ok) location.reload();
+}
+</script>
+{% endblock %}
