@@ -4,6 +4,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.exceptions import HTTPException
 from contextlib import asynccontextmanager
+from sqlalchemy import text
 
 from app.database import engine, Base, SessionLocal
 from app.models import User, SiteSettings
@@ -19,8 +20,10 @@ settings = get_settings()
 async def lifespan(app: FastAPI):
     print(f"[STARTUP v{__version__}] Creating database tables...")
     Base.metadata.create_all(bind=engine)
+
     db = SessionLocal()
     try:
+        # Sprawdź czy admin istnieje
         admin_user = db.query(User).filter(User.email == settings.ADMIN_EMAIL).first()
         if not admin_user:
             print(f"[STARTUP] Creating admin: {settings.ADMIN_EMAIL}")
@@ -30,8 +33,20 @@ async def lifespan(app: FastAPI):
                 full_name="Administrator", is_active=True, is_superuser=True
             )
             db.add(admin_user)
-        site = db.query(SiteSettings).first()
+
+        # Sprawdź ustawienia strony - z obsługą starej bazy
+        try:
+            site = db.query(SiteSettings).first()
+        except Exception as e:
+            print(f"[STARTUP] Old database schema detected, resetting site_settings...")
+            # Usuń starą tabelę i stwórz od nowa
+            db.execute(text("DROP TABLE IF EXISTS site_settings"))
+            db.commit()
+            Base.metadata.create_all(bind=engine)
+            site = None
+
         if not site:
+            print("[STARTUP] Creating default site settings...")
             site = SiteSettings(
                 site_name="Firma Budowlana MAX",
                 site_tagline="Budujemy z pasją od 1998 roku",
@@ -40,6 +55,7 @@ async def lifespan(app: FastAPI):
                 contact_address="ul. Budowlana 1\n00-001 Warszawa"
             )
             db.add(site)
+
         db.commit()
         print("[STARTUP] Database ready.")
     except Exception as e:
